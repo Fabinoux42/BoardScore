@@ -56,12 +56,26 @@ function removePlayer(idx) {
 }
 
 /* ─── RENDER ─── */
+function roundHasScores() {
+    return state.history.some(h => h.round === state.round);
+}
+
 function render() {
     renderPlayers();
     renderHistory();
     renderDominoSet();
     const total = state.dominoMax + 1;
-    document.getElementById('roundBadge').textContent = 'Manche ' + state.round + ' / ' + total;
+    const badge = document.getElementById('roundBadge');
+    const scored = roundHasScores();
+    badge.textContent = (scored ? '\u2705 ' : '\u23f3 ') + 'Manche ' + state.round + ' / ' + total;
+    badge.style.background = scored ? 'var(--green)' : 'var(--accent)';
+    badge.style.color = scored ? '#0d2e1a' : '#1a0a2e';
+
+    // Bouton manche suivante : grisé si pas de scores
+    const btnNext = document.querySelector('.btn-next');
+    if (btnNext) {
+        btnNext.style.opacity = scored ? '1' : '0.4';
+    }
 }
 
 function renderDominoSet() {
@@ -122,20 +136,28 @@ function renderHistory() {
 /* ─── SCORE MODAL ─── */
 function openScoreModal() {
     if (state.players.length === 0) { alert('Ajoute au moins un joueur !'); return; }
+
+    // Si la manche en cours a déjà des scores, on les pré-remplit
+    const existing = state.history.find(h => h.round === state.round);
+
     state.tempScores = {};
-    state.players.forEach(p => state.tempScores[p.name] = 0);
+    state.players.forEach(p => {
+        state.tempScores[p.name] = existing ? (existing.scores[p.name] || 0) : 0;
+    });
+
     document.getElementById('modalSub').textContent = 'Manche ' + state.round + ' — points de chaque joueur';
-    document.getElementById('scoreInputs').innerHTML = state.players.map((p, i) =>
-        '<div class="score-row">' +
-        '<div class="avatar-sm" style="background:' + p.color + '">' + getInitial(p.name) + '</div>' +
-        '<div><div class="name">' + p.name + '</div><div class="current">Total actuel : ' + p.score + '</div></div>' +
-        '<div class="score-input-wrap">' +
-        '<div class="score-stepper" onclick="stepScore(\'' + p.name + '\',-5)">−</div>' +
-        '<input type="number" id="inp_' + i + '" value="0" min="0" max="999" oninput="state.tempScores[\'' + p.name + '\']=parseInt(this.value)||0" />' +
-        '<div class="score-stepper" onclick="stepScore(\'' + p.name + '\',5)">+</div>' +
-        '</div>' +
-        '</div>'
-    ).join('');
+    document.getElementById('scoreInputs').innerHTML = state.players.map((p, i) => {
+        const val = state.tempScores[p.name];
+        return '<div class="score-row">' +
+            '<div class="avatar-sm" style="background:' + p.color + '">' + getInitial(p.name) + '</div>' +
+            '<div><div class="name">' + p.name + '</div><div class="current">Total actuel : ' + p.score + '</div></div>' +
+            '<div class="score-input-wrap">' +
+            '<div class="score-stepper" onclick="stepScore(\'' + p.name + '\',-5)">−</div>' +
+            '<input type="number" id="inp_' + i + '" value="' + val + '" min="0" max="999" oninput="state.tempScores[\'' + p.name + '\']=parseInt(this.value)||0" />' +
+            '<div class="score-stepper" onclick="stepScore(\'' + p.name + '\',5)">+</div>' +
+            '</div>' +
+            '</div>';
+    }).join('');
     document.getElementById('scoreModal').classList.add('open');
 }
 
@@ -149,20 +171,62 @@ function stepScore(name, delta) {
 
 function confirmScores() {
     const roundScores = {};
+    const existingIdx = state.history.findIndex(h => h.round === state.round);
+
     state.players.forEach((p, i) => {
         const inp = document.getElementById('inp_' + i);
-        const pts = parseInt(inp?.value) || 0;
-        roundScores[p.name] = pts;
-        p.score += pts;
+        const newPts = parseInt(inp?.value) || 0;
+        roundScores[p.name] = newPts;
+
+        if (existingIdx !== -1) {
+            // Correction : on retire l'ancien score et on ajoute le nouveau
+            const oldPts = state.history[existingIdx].scores[p.name] || 0;
+            p.score = p.score - oldPts + newPts;
+        } else {
+            // Première saisie pour cette manche
+            p.score += newPts;
+        }
     });
-    state.history.push({ round: state.round, scores: roundScores });
+
+    if (existingIdx !== -1) {
+        // On remplace l'entrée existante
+        state.history[existingIdx].scores = roundScores;
+    } else {
+        state.history.push({ round: state.round, scores: roundScores });
+    }
+
     document.getElementById('scoreModal').classList.remove('open');
     save(); render();
 }
 
 /* ─── ROUND ─── */
+function showRoundError(msg) {
+    let el = document.getElementById('roundError');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'roundError';
+        el.style.cssText = 'background:rgba(255,85,85,0.12);border:1px solid rgba(255,85,85,0.35);border-radius:10px;padding:9px 14px;font-size:0.8rem;color:var(--red);text-align:center;margin:10px 16px 0;animation:fadeIn 0.25s ease;';
+        // Insérer sous le header
+        const header = document.querySelector('header');
+        header.insertAdjacentElement('afterend', el);
+    }
+    el.textContent = msg;
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => el.remove(), 3500);
+}
+
 function nextRound() {
     if (state.players.length === 0) return;
+    if (!roundHasScores()) {
+        showRoundError('\u26a0\ufe0f Saisis les scores de la manche ' + state.round + ' avant de continuer !');
+        // Faire vibrer le bouton "Saisir scores"
+        const btnScore = document.querySelector('.btn-score');
+        if (btnScore) {
+            btnScore.style.transform = 'scale(1.06)';
+            setTimeout(() => btnScore.style.transform = '', 200);
+        }
+        return;
+    }
     state.round++;
     save(); render();
     if (state.round > state.dominoMax + 1) setTimeout(showWinner, 300);
