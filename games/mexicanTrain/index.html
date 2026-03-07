@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#1a0a2e" />
+    <title>🚂 Train Mexicain</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../style.css" />
+    <link rel="stylesheet" href="MexicanTrain.css" />
+</head>
+<body>
+<div id="app">
+
+    <header>
+        <div class="header-left">
+            <a href="../../index.html" class="btn-back">←</a>
+            <div>
+                <div class="header-title">🚂 Train <span>Mexicain</span></div>
+                <div class="header-sub">Compteur de points</div>
+            </div>
+        </div>
+        <div class="round-badge" id="roundBadge">Manche 1</div>
+    </header>
+
+    <div class="install-hint" id="installHint">
+        💡 <strong>Installer l'app :</strong> dans Chrome → menu ⋮ → "Ajouter à l'écran d'accueil"
+    </div>
+
+    <div class="section" style="margin-top:16px;">
+        <div class="section-title">Jeu de dominos</div>
+        <div class="domino-set-card">
+            <div class="domino-set-label">
+                <span class="domino-set-icon">🁣</span>
+                <div>
+                    <div class="domino-set-title">Double-<span id="setValueDisplay">12</span></div>
+                    <div class="domino-set-sub" id="setRoundsDisplay">13 manches · de [12:12] à [0:0]</div>
+                </div>
+            </div>
+            <div class="set-options" id="setOptions"></div>
+        </div>
+    </div>
+
+    <div class="section" style="margin-top:16px;">
+        <div class="section-title">Joueurs</div>
+        <div class="players-list" id="playersList"></div>
+    </div>
+
+    <div class="section" style="margin-top:16px;">
+        <div class="section-title">Ajouter un joueur</div>
+        <div class="add-player-form">
+            <input type="text" id="newPlayerName" placeholder="Nom du joueur…" maxlength="20" />
+            <button class="btn-add" onclick="addPlayer()">+ Ajouter</button>
+        </div>
+    </div>
+
+    <div class="section" style="margin-top:18px;" id="historySection">
+        <div class="section-title">Historique des manches</div>
+        <div class="history-list" id="historyList"></div>
+    </div>
+
+    <div class="domino-deco">
+        <div class="tile"><div class="tile-half">••</div><div class="tile-half">•</div></div>
+        <div class="tile"><div class="tile-half">•••</div><div class="tile-half">••</div></div>
+        <div class="tile"><div class="tile-half">••</div><div class="tile-half">••</div></div>
+        <div class="tile"><div class="tile-half">•</div><div class="tile-half">•••</div></div>
+    </div>
+
+</div><!-- /#app -->
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+    <button class="btn-main btn-score"   onclick="openScoreModal()">✏️ Saisir scores</button>
+    <button class="btn-main btn-next"    onclick="nextRound()">▶ Manche suiv.</button>
+    <button class="btn-main btn-restart" onclick="openNewGameModal()">↺ Rejouer</button>
+</div>
+
+<!-- Score Modal -->
+<div class="modal-overlay" id="scoreModal" onclick="closeBgModal(event,'scoreModal')">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Saisir les points</div>
+        <div class="modal-sub" id="modalSub">Entrez les points de cette manche pour chaque joueur</div>
+        <div class="score-inputs" id="scoreInputs"></div>
+        <button class="modal-confirm" onclick="confirmScores()">✅ Confirmer les scores</button>
+    </div>
+</div>
+
+<!-- New Game Modal -->
+<div class="modal-overlay" id="newGameModal" onclick="closeBgModal(event,'newGameModal')">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🎮 Nouvelle partie</div>
+        <div class="modal-sub">Configure ta prochaine partie</div>
+
+        <div class="newgame-section">
+            <div class="newgame-section-title">Joueurs</div>
+            <div class="choice-cards">
+                <div class="choice-card selected" id="cc-same" onclick="selectPlayerMode('same')">
+                    <div class="cc-icon">👥</div>
+                    <div class="cc-title">Mêmes joueurs</div>
+                    <div class="cc-sub">Remettre les scores à zéro</div>
+                </div>
+                <div class="choice-card" id="cc-new" onclick="selectPlayerMode('new')">
+                    <div class="cc-icon">✨</div>
+                    <div class="cc-title">Nouveaux joueurs</div>
+                    <div class="cc-sub">Repartir de zéro</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="newgame-section" id="ng-keep-section">
+            <div class="newgame-section-title">Sélectionner les joueurs à garder</div>
+            <div class="keep-players-list" id="ngKeepList"></div>
+        </div>
+
+        <div class="newgame-section" id="ng-new-section" style="display:none;">
+            <div class="newgame-section-title">Joueurs de la nouvelle partie</div>
+            <div class="new-players-list" id="ngNewList"></div>
+            <div class="add-newplayer-form">
+                <input type="text" id="ngNewPlayerInput" placeholder="Nom du joueur…" maxlength="20" />
+                <button class="btn-add-sm" onclick="ngAddPlayer()">+ Ajouter</button>
+            </div>
+        </div>
+
+        <div class="newgame-section">
+            <div class="newgame-section-title">Jeu de dominos</div>
+            <div class="newgame-set-options" id="ngSetOptions"></div>
+        </div>
+
+        <button class="newgame-confirm" onclick="confirmNewGame()">🚂 Lancer la partie !</button>
+        <button class="newgame-cancel"  onclick="closeNewGameModal()">Annuler</button>
+    </div>
+</div>
+
+<!-- Winner screen -->
+<div class="winner-overlay" id="winnerScreen">
+    <div class="winner-trophy">🏆</div>
+    <div class="winner-title">Gagnant !</div>
+    <div class="winner-name"  id="winnerName"></div>
+    <div class="winner-score" id="winnerScore"></div>
+    <button class="btn-winner-main" onclick="openNewGameFromWinner()">🎮 Nouvelle partie</button>
+</div>
+
+<script src="MexicanTrain.js"></script>
+</body>
+</html>
