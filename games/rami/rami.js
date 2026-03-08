@@ -141,14 +141,7 @@ function renderPlayers() {
         else if (isDanger) cardClass += ' danger';
         const scoreClass = (dangerThreshold !== null && p.score >= dangerThreshold) ? 'danger-score' : (p.score === 0 ? 'zero-score' : '');
 
-        // Badges combinés
-        let badges = '';
-        if (isLeader) badges += '👑';
-        if (isDanger && !isLeader) badges += '⚠️';
-        if (isDealer) badges += ' 🎴';
-
         return '<div class="player-card ' + cardClass.trim() + '" style="--player-color:' + p.color + '">' +
-            (badges ? '<div class="player-badge">' + badges.trim() + '</div>' : '') +
             '<div class="player-avatar" style="background:' + p.color + '">' + getInitial(p.name) + '</div>' +
             '<div class="player-info">' +
             '<div class="player-name">' + p.name + '</div>' +
