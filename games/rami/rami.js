@@ -130,15 +130,16 @@ function renderPlayers() {
     const sorted = [...state.players].sort((a, b) => a.score - b.score);
     const leader = sorted[0];
     const dealerIdx = getDealerIdx();
+    const dangerThreshold = state.scoreLimit ? Math.floor(state.scoreLimit * 0.7) : null;
 
     list.innerHTML = state.players.map((p, i) => {
         const isLeader = p.name === leader.name && rounds > 0;
-        const isDanger = p.score >= 700 && !isLeader;
+        const isDanger = dangerThreshold !== null && p.score >= dangerThreshold && !isLeader;
         const isDealer = i === dealerIdx;
         let cardClass = isDealer ? 'is-dealer' : '';
         if (isLeader) cardClass += ' leader';
         else if (isDanger) cardClass += ' danger';
-        const scoreClass = p.score >= 700 ? 'danger-score' : (p.score === 0 ? 'zero-score' : '');
+        const scoreClass = (dangerThreshold !== null && p.score >= dangerThreshold) ? 'danger-score' : (p.score === 0 ? 'zero-score' : '');
 
         // Badges combinés
         let badges = '';
