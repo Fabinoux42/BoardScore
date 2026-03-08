@@ -287,7 +287,7 @@ function renderScoreInputs() {
         const locked = isWinner || isNoPose || isRamiSecLoser;
         let rowTag = '';
         if (isWinner) rowTag = '<div class="row-tag winner-tag">🏆 Gagnant −10</div>';
-        else if (isRamiSecLoser) rowTag = '<div class="row-tag ramiSec-tag">⚡ Rami sec</div>';
+        else if (isRamiSecLoser) rowTag = '<div class="row-tag ramiSec-tag">⚡</div>';
         else if (isNoPose) rowTag = '<div class="row-tag noPose-tag">🚫 Sans pose</div>';
 
         return '<div class="score-row ' + (isWinner ? 'is-winner' : '') + (isNoPose ? ' is-noPose' : '') + (locked ? ' locked' : '') + '" id="srow_' + i + '">' +
