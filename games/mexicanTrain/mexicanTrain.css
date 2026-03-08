@@ -345,9 +345,13 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
     background: var(--card); border: 1px solid var(--border);
     border-radius: 10px; padding: 10px 14px;
     font-size: 0.8rem; color: var(--muted);
-    display: flex; justify-content: space-between; align-items: center;
 }
-.history-item strong { color: var(--text); }
+.history-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.history-round-num { color: var(--text); font-weight: 600; }
+.history-scores { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.h-score { font-size: 0.8rem; }
+.h-score strong { color: var(--text); font-weight: 600; }
+.h-score .val { font-weight: 700; color: var(--accent); }
 
 /* ── WINNER SCREEN ── */
 .winner-overlay {
