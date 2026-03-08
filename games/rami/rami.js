@@ -1,11 +1,11 @@
 const COLORS = ['#f5c542','#e05c2a','#3ddc84','#9b59f5','#38bdf8','#fb7185','#a3e635','#f97316'];
-const SCORE_LIMIT = 1000;
 const STEP = 100; // incrément du stepper
 
 let state = {
     players: [],
     round: 1,
     history: [],
+    scoreLimit: 1000,   // null = infini, number = limite custom
     dealerIdx: 0,   // index du donneur actuel dans players[]
     tempWinner: null,
     tempNoPoseSet: new Set(),
@@ -17,6 +17,8 @@ let ngMode = 'same';
 let ngKeepSet = new Set();
 let ngNewPlayers = [];
 let ngDealerIdx = 0;
+let ngScoreLimit = 1000;   // 1000 | null | number custom
+let ngCustomLimit = 200;
 
 /* ─── PERSISTENCE ─── */
 function save() {
@@ -108,9 +110,14 @@ function renderProgress() {
     const maxScore = Math.max(...state.players.map(p => p.score));
     if (maxScore <= 0) { wrap.style.display = 'none'; return; }
     wrap.style.display = 'block';
-    const pct = Math.min(100, (maxScore / SCORE_LIMIT) * 100);
+    if (!state.scoreLimit) {
+        bar.style.width = '0%';
+        lbl.textContent = 'max ' + maxScore + ' (∞ sans limite)';
+        return;
+    }
+    const pct = Math.min(100, (maxScore / state.scoreLimit) * 100);
     bar.style.width = pct + '%';
-    lbl.textContent = 'max ' + maxScore + ' / ' + SCORE_LIMIT;
+    lbl.textContent = 'max ' + maxScore + ' / ' + state.scoreLimit;
 }
 
 function renderPlayers() {
@@ -342,8 +349,8 @@ function confirmScores() {
     document.getElementById('scoreModal').classList.remove('open');
     save(); render();
 
-    // Vérifier fin de partie (quelqu'un >= 1000)
-    if (state.players.some(p => p.score >= SCORE_LIMIT)) {
+    // Vérifier fin de partie
+    if (state.scoreLimit && state.players.some(p => p.score >= state.scoreLimit)) {
         setTimeout(showWinner, 400);
     }
 }
@@ -403,10 +410,13 @@ function openNewGameModal() {
     ngKeepSet = new Set(state.players.map((_, i) => i));
     ngNewPlayers = [];
     ngDealerIdx = 0;
+    ngScoreLimit = (state.scoreLimit !== undefined) ? state.scoreLimit : 1000;
+    ngCustomLimit = (ngScoreLimit && ngScoreLimit !== 1000) ? ngScoreLimit : 200;
     renderNgModeCards();
     renderNgKeepList();
     renderNgNewList();
     renderNgDealerList();
+    renderNgScoreLimit();
     document.getElementById('newGameModal').classList.add('open');
 }
 
@@ -500,6 +510,52 @@ function selectNgDealer(i) {
     renderNgDealerList();
 }
 
+/* ─── SCORE LIMIT SELECTOR ─── */
+function renderNgScoreLimit() {
+    const section = document.getElementById('ng-limit-section');
+    if (!section) return;
+    const isCustom = ngScoreLimit !== 1000 && ngScoreLimit !== null;
+    const modes = [
+        { val: 1000,     label: '1 000 pts', sub: 'Standard' },
+        { val: null,     label: '∞ Infini',  sub: 'Sans limite' },
+        { val: 'custom', label: 'Perso',     sub: 'Nombre libre' },
+    ];
+    section.innerHTML =
+        '<div class="newgame-section-title">🏁 Limite de points</div>' +
+        '<div class="limit-cards">' +
+        modes.map(m => {
+            const active = m.val === 'custom' ? isCustom : (m.val === ngScoreLimit && !isCustom);
+            const onclickVal = m.val === 'custom' ? '\'custom\'' : (m.val === null ? 'null' : m.val);
+            return '<button class="limit-card ' + (active ? 'active' : '') + '" onclick="selectNgScoreMode(' + onclickVal + ')">' +
+                '<div class="lc-label">' + m.label + '</div>' +
+                '<div class="lc-sub">' + m.sub + '</div>' +
+                '</button>';
+        }).join('') +
+        '</div>' +
+        (isCustom
+            ? '<div class="custom-limit-wrap">' +
+            '<input type="number" id="ngCustomLimitInput" value="' + ngCustomLimit + '" min="200" step="100" placeholder="ex: 500" oninput="onNgCustomLimitInput()" />' +
+            '<span class="custom-limit-unit">pts (min. 200)</span>' +
+            '</div>'
+            : '');
+}
+
+function selectNgScoreMode(val) {
+    if (val === 'custom') {
+        ngScoreLimit = ngCustomLimit >= 200 ? ngCustomLimit : 500;
+    } else {
+        ngScoreLimit = val;
+    }
+    renderNgScoreLimit();
+}
+
+function onNgCustomLimitInput() {
+    const inp = document.getElementById('ngCustomLimitInput');
+    const v = parseInt(inp.value) || 200;
+    ngCustomLimit = Math.max(200, v);
+    ngScoreLimit = ngCustomLimit;
+}
+
 function confirmNewGame() {
     let newPlayers = [];
     if (ngMode === 'same') {
@@ -513,6 +569,7 @@ function confirmNewGame() {
     state.round = 1;
     state.history = [];
     state.dealerIdx = ngDealerIdx;
+    state.scoreLimit = ngScoreLimit;
     document.getElementById('newGameModal').classList.remove('open');
     save(); render();
     window.scrollTo({ top: 0, behavior: 'smooth' });

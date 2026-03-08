@@ -199,3 +199,56 @@ input[type="number"]:disabled { opacity: 0.4; }
 .card-deco span:nth-child(2), .card-deco span:nth-child(4) { color: var(--red); }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+/* ── SCORE LIMIT SELECTOR (nouvelle partie) ── */
+.limit-cards {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.limit-card {
+    flex: 1;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+}
+.limit-card:active { transform: scale(0.96); }
+.limit-card.active {
+    border-color: var(--accent2);
+    background: rgba(224, 92, 42, 0.1);
+}
+.limit-card .lc-label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 3px;
+}
+.limit-card .lc-sub {
+    font-size: 0.68rem;
+    color: var(--muted);
+}
+.limit-card.active .lc-label { color: var(--accent2); }
+
+.custom-limit-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid rgba(224, 92, 42, 0.4);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-top: 4px;
+}
+.custom-limit-wrap input[type="number"] {
+    width: 90px;
+    font-size: 1.1rem;
+    border-color: var(--accent2);
+}
+.custom-limit-unit {
+    font-size: 0.75rem;
+    color: var(--muted);
+}
