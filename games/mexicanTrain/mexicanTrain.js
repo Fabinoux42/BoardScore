@@ -127,9 +127,14 @@ function renderHistory() {
     const list = document.getElementById('historyList');
     if (state.history.length === 0) { section.style.display = 'none'; return; }
     section.style.display = 'block';
-    list.innerHTML = state.history.map((h, i) => {
-        const entries = Object.entries(h.scores).map(([name, pts]) => '<strong>' + name + '</strong>: +' + pts).join(' · ');
-        return '<div class="history-item"><span>Manche ' + (i + 1) + '</span><span>' + entries + '</span></div>';
+    list.innerHTML = [...state.history].reverse().map((h, i) => {
+        const header = '<div class="history-item-header"><span class="history-round-num">Manche ' + h.round + '</span></div>';
+        const scores = '<div class="history-scores">' +
+            Object.entries(h.scores).map(([name, pts]) =>
+                '<span class="h-score"><strong>' + name + '</strong>: <span class="val">+' + pts + '</span></span>'
+            ).join('') +
+            '</div>';
+        return '<div class="history-item">' + header + scores + '</div>';
     }).join('');
 }
 

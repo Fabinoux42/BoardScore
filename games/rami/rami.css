@@ -169,17 +169,17 @@ input[type="number"]:disabled { opacity: 0.4; }
 .history-list { display: flex; flex-direction: column; gap: 6px; }
 .history-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.8rem; color: var(--muted); }
 .history-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.history-item-header .round-num { color: var(--text); font-weight: 600; }
+.history-round-num { color: var(--text); font-weight: 600; }
 .history-tags { display: flex; gap: 5px; flex-wrap: wrap; }
-.htag { font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
-.htag-dealer { background: rgba(224,92,42,0.2); color: var(--accent2); }
-.htag-special { background: rgba(245,197,66,0.2); color: var(--accent); }
+.h-tag { font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
+.h-tag.rami-sec { background: rgba(245,197,66,0.15); color: var(--accent); }
+.h-tag.no-pose  { background: rgba(255,85,85,0.12);  color: var(--red); }
 .history-scores { display: flex; flex-wrap: wrap; gap: 4px 12px; }
-.history-score-entry { font-size: 0.8rem; }
-.history-score-entry strong { color: var(--text); }
-.pts-neg { color: var(--green); font-weight: 700; }
-.pts-pos { font-weight: 700; }
-.pts-special { color: var(--accent); font-weight: 700; }
+.h-score { font-size: 0.8rem; }
+.h-score strong { color: var(--text); font-weight: 600; }
+.h-score .val { font-weight: 700; }
+.h-score .val.bonus   { color: var(--green); }
+.h-score .val.penalty { color: var(--red); }
 
 .winner-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 300; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.4s; overflow-y: auto; }
 .winner-overlay.show { opacity: 1; pointer-events: all; }
