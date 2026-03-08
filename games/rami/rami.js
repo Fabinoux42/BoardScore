@@ -112,7 +112,7 @@ function renderProgress() {
     wrap.style.display = 'block';
     if (!state.scoreLimit) {
         bar.style.width = '0%';
-        lbl.textContent = 'max ' + maxScore + ' (∞ sans limite)';
+        lbl.textContent = 'max sans limite (∞)';
         return;
     }
     const pct = Math.min(100, (maxScore / state.scoreLimit) * 100);
@@ -188,7 +188,7 @@ function openScoreModal() {
 
     const existing = state.history.find(h => h.round === state.round);
     state.tempWinner = existing ? existing.winner : null;
-    state.tempRamiSec = existing ? !!existing.ramiSec : false;
+    state.tempRamiSec = existing ? !!existing.ramiSec : true;
     state.tempNoPoseActive = existing ? (existing.noPose && existing.noPose.length > 0) : false;
     state.tempNoPoseSet = new Set(existing && existing.noPose ? existing.noPose : []);
 
@@ -201,6 +201,15 @@ function openScoreModal() {
 }
 
 function renderWinnerPicker() {
+    // Ajouter le hint si absent
+    const block = document.querySelector('.modal-block');
+    if (block && !document.getElementById('winnerRequiredHint')) {
+        const hint = document.createElement('div');
+        hint.id = 'winnerRequiredHint';
+        hint.style.cssText = 'display:none;margin-top:8px;background:rgba(255,85,85,0.12);border:1px solid rgba(255,85,85,0.35);border-radius:10px;padding:8px 12px;font-size:0.78rem;color:var(--red);text-align:center;';
+        hint.textContent = '⚠️ Sélectionne qui a fait Rami avant de confirmer !';
+        block.appendChild(hint);
+    }
     const list = document.getElementById('winnerRoundList');
     list.innerHTML = state.players.map(p =>
         '<button class="picker-btn ' + (state.tempWinner === p.name ? 'selected' : '') + '" onclick="selectWinner(\'' + p.name + '\')">' +
@@ -304,6 +313,20 @@ function onInputChange(idx) {
 }
 
 function confirmScores() {
+    if (!state.tempWinner) {
+        const hint = document.getElementById('winnerRequiredHint');
+        if (hint) {
+            hint.style.display = 'block';
+            setTimeout(() => hint.style.display = 'none', 2500);
+        }
+        // Faire vibrer la section picker
+        const block = document.querySelector('.modal-block');
+        if (block) {
+            block.style.transform = 'scale(1.02)';
+            setTimeout(() => block.style.transform = '', 200);
+        }
+        return;
+    }
     const scores = {};
     const rawScores = {};
 
