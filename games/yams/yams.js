@@ -38,6 +38,7 @@ let sacrificeMode = false;
 function emptySheet() {
     const s = {};
     CATEGORIES.forEach(c => s[c.id] = null);
+    s.yamsBonus = 0; // +100 par Yam's bonus
     return s;
 }
 
@@ -58,7 +59,7 @@ function bonus(sheet) {
 }
 
 function grandTotal(sheet) {
-    return upperTotal(sheet) + bonus(sheet) + lowerTotal(sheet);
+    return upperTotal(sheet) + bonus(sheet) + lowerTotal(sheet) + (sheet.yamsBonus || 0);
 }
 
 function filled(sheet) {
@@ -258,6 +259,21 @@ function renderSheet() {
         if (disabled) {
             const val = sheet[cat.id];
             const valClass = val > 0 ? '' : 'zero';
+
+            // Cas spécial : Yam's déjà scoré à 50 → permettre Yam's bonus
+            if (cat.id === 'yams' && val === 50) {
+                const isBonusPend = pending.yamsBonus === true;
+                return '<div class="sh-row ' + (isBonusPend ? 'pend' : 'done') + '">' +
+                    '<span class="sh-icon">' + cat.icon + '</span>' +
+                    '<span class="sh-name">' + cat.name + '</span>' +
+                    '<div class="sh-inp-area">' +
+                    '<span class="sh-done-val">50</span>' +
+                    '<button class="sh-yams-bonus-btn ' + (isBonusPend ? 'on' : '') + '" onclick="toggleYamsBonus()">' +
+                    (isBonusPend ? '🎲 +100 !' : '🎲 Bonus ?') +
+                    '</button>' +
+                    '</div></div>';
+            }
+
             return '<div class="sh-row done">' +
                 '<span class="sh-icon">' + cat.icon + '</span>' +
                 '<span class="sh-name">' + cat.name + '</span>' +
@@ -332,6 +348,13 @@ function renderSheet() {
     html += '<div class="sh-sub ' + (uTot >= 63 ? 'earned' : '') + '"><span>Bonus</span><span>' + (uTot >= 63 ? '+35' : '–') + '</span></div>';
     html += '<div class="sh-label">Section basse</div>';
     html += lowerCats.map(row).join('');
+
+    // Yam's bonus
+    const yb = sheet.yamsBonus || 0;
+    if (yb > 0) {
+        html += '<div class="sh-sub earned"><span>🎲 Yam\'s bonus</span><span>+' + yb + '</span></div>';
+    }
+
     html += '<div class="sh-grand"><span>Total</span><span>' + grandTotal(sheet) + '</span></div>';
 
     BoardScore.$('scoreSheet').innerHTML = html;
@@ -361,6 +384,21 @@ function toggleCheck(id, fixed) {
         game.getState().turnPending = { catId: id, value: 0 };
     } else {
         game.getState().turnPending = { catId: id, value: fixed };
+    }
+    renderSheet();
+}
+
+/* Yam's bonus : le joueur déclare avoir refait un Yam's */
+function toggleYamsBonus() {
+    const state = game.getState();
+    const p = state.turnPending;
+
+    if (p.yamsBonus) {
+        // Désactiver le bonus
+        delete p.yamsBonus;
+    } else {
+        // Activer le bonus — le joueur doit aussi choisir une autre catégorie pour son score
+        p.yamsBonus = true;
     }
     renderSheet();
 }
@@ -491,15 +529,23 @@ function confirmTurn() {
     const current = curPlayer(state);
     const sheet = state.sheets[current.name];
     sheet[p.catId] = p.value || 0;
+
+    // Yam's bonus : si le joueur avait déjà 50 dans la case Yam's
+    // et qu'il a marqué un Yam's bonus ce tour
+    if (p.yamsBonus) {
+        sheet.yamsBonus = (sheet.yamsBonus || 0) + 100;
+    }
+
     current.score = grandTotal(sheet);
 
     // Historique
     const cat = CATEGORIES.find(x => x.id === p.catId);
+    const historyValue = (p.value || 0) + (p.yamsBonus ? 100 : 0);
     state.history.push({
         round: state.history.length + 1,
         player: current.name,
-        category: cat ? cat.icon + ' ' + cat.name : p.catId,
-        value: sheet[p.catId],
+        category: (p.yamsBonus ? '🎲+100 ' : '') + (cat ? cat.icon + ' ' + cat.name : p.catId),
+        value: historyValue,
         scores: Object.fromEntries(
             state.players.map(pl => [pl.name, grandTotal(state.sheets[pl.name] || {})])
         ),
@@ -601,6 +647,13 @@ function openCompareModal() {
             const v = (state.sheets[p.name] || {})[c.id];
             h += '<div class="cmp-v ' + (v === null ? 'empty' : '') + '">' + (v !== null ? v : '–') + '</div>';
         });
+    });
+
+    // Yam's bonus
+    h += '<div class="cmp-c cmp-tot">🎲 Yam\'s bonus</div>';
+    state.players.forEach(p => {
+        const yb = (state.sheets[p.name] || {}).yamsBonus || 0;
+        h += '<div class="cmp-v cmp-tot ' + (yb > 0 ? 'earned' : '') + '">' + (yb > 0 ? '+' + yb : '–') + '</div>';
     });
 
     // Grand total
