@@ -46,11 +46,6 @@
         </div>
     </div>
 
-    <div class="section" style="margin-top:18px;" id="historySection">
-        <div class="section-title">Historique des manches</div>
-        <div class="history-list" id="historyList"></div>
-    </div>
-
     <!-- Aide-mémoire scoring -->
     <div class="section" style="margin-top:18px;">
         <div class="section-title">Barème des points</div>
@@ -67,6 +62,11 @@
                 <span class="sh-pts">50 pts</span>
             </div>
         </div>
+    </div>
+
+    <div class="section" style="margin-top:18px;" id="historySection">
+        <div class="section-title">Historique des manches</div>
+        <div class="history-list" id="historyList"></div>
     </div>
 
     <div class="card-deco">
@@ -135,6 +135,8 @@
                 <button class="btn-add-sm" onclick="ngAddPlayer()">+ Ajouter</button>
             </div>
         </div>
+
+        <div class="newgame-section" id="ng-limit-section"></div>
 
         <button class="newgame-confirm" onclick="confirmNewGame()">🎴 Lancer la partie !</button>
         <button class="newgame-cancel"  onclick="closeNewGameModal()">Annuler</button>

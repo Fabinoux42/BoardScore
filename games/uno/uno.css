@@ -21,6 +21,7 @@
 
 /* ── SCORE ROW : winner lock ── */
 .score-row.is-winner .score-input-wrap { opacity: 0.3; pointer-events: none; }
+.score-row.is-winner .calc-toggle { display: none; }
 
 /* ── CARD DECO ── */
 .card-deco {
@@ -64,3 +65,149 @@
     background: var(--border);
     margin: 2px 0;
 }
+
+
+/* ══════════════════════════════════
+   CALCULATRICE DE CARTES
+   ══════════════════════════════════ */
+
+/* Bouton toggle 🧮 à droite du stepper */
+.calc-toggle {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    color: var(--text);
+    font-size: 0.95rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-left: 6px;
+    flex-shrink: 0;
+}
+.calc-toggle:active { transform: scale(0.92); }
+.calc-toggle.active {
+    border-color: #fb7185;
+    background: rgba(251, 113, 133, 0.15);
+}
+
+/* Score row : permettre le wrap quand la calculatrice est ouverte */
+.score-row {
+    flex-wrap: wrap;
+}
+
+/* Panneau calculatrice */
+.calc-panel {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    background: var(--glass);
+    border: 1px solid rgba(251, 113, 133, 0.25);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: calcSlide 0.2s ease;
+}
+
+@keyframes calcSlide {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Ligne de la calculatrice */
+.calc-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.calc-label {
+    font-size: 0.78rem;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+}
+
+/* Input pour les chiffres (valeur libre) */
+.calc-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.calc-inp {
+    width: 60px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 6px;
+    color: var(--text);
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+}
+.calc-inp:focus { border-color: #fb7185; }
+.calc-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.calc-unit {
+    font-size: 0.72rem;
+    color: var(--muted);
+}
+
+/* Compteur +/- pour cartes spéciales */
+.calc-counter {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.calc-step {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    color: var(--text);
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-weight: 700;
+    user-select: none;
+}
+.calc-step:active { background: var(--glass-strong); }
+
+.calc-count {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #fb7185;
+    min-width: 20px;
+    text-align: center;
+}
+
+.calc-pts {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-left: 2px;
+}
+
+/* Bouton appliquer */
+.calc-apply {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: #fb7185;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    margin-top: 2px;
+}
+.calc-apply:active { opacity: 0.85; }
