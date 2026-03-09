@@ -249,17 +249,20 @@
 }
 .sh-row.done .sh-icon { opacity: 0.7; }
 
-.modal-btns { display: flex; gap: 8px; margin-top: 16px; }
+.modal-btns { display: flex; gap: 8px; margin-top: 16px; align-items: stretch; }
 .modal-btns .modal-confirm { flex: 1; }
 .btn-skip {
-    padding: 15px 20px; border-radius: 14px; border: 1px solid var(--border);
-    background: transparent; color: var(--muted);
+    padding: 15px 20px; border-radius: 14px;
+    border: 1.5px solid rgba(56, 189, 248, 0.35);
+    background: rgba(56, 189, 248, 0.08);
+    color: var(--blue);
     font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.85rem;
     cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
 }
 
 .turn-error-hint {
-    margin-bottom: 10px;
+    margin: 14px 0 4px;
     background: rgba(255, 85, 85, 0.12);
     border: 1px solid rgba(255, 85, 85, 0.35);
     border-radius: 10px;
