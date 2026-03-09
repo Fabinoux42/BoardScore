@@ -25,10 +25,8 @@ const game = BoardScore.create({
         return { isDanger, scoreClass };
     },
 
-    /* ── Rendu spécifique : progress bar ── */
-    onRender(state) {
-        renderProgress(state);
-    },
+    /* ── Progress bar : limite fixe à 100 ── */
+    scoreLimit: SCORE_LIMIT,
 
     /* ── History : affichage pénalité doublement ── */
     buildHistoryItem(h) {
@@ -58,23 +56,6 @@ const game = BoardScore.create({
 /* ═══════════════════════════════════════════
    FONCTIONS SPÉCIFIQUES AU SKYJO
    ═══════════════════════════════════════════ */
-
-/* ── Progress bar vers 100 ── */
-function renderProgress(state) {
-    const wrap = BoardScore.$('progressWrap');
-    const bar  = BoardScore.$('progressBar');
-    const lbl  = BoardScore.$('progressLabel');
-    if (!wrap) return;
-
-    if (state.players.length === 0) { wrap.style.display = 'none'; return; }
-    const maxScore = Math.max(...state.players.map(p => p.score));
-    if (maxScore <= 0) { wrap.style.display = 'none'; return; }
-    wrap.style.display = 'block';
-    const pct = Math.min(100, (maxScore / SCORE_LIMIT) * 100);
-    bar.style.width = pct + '%';
-    lbl.textContent = 'max ' + maxScore + ' / ' + SCORE_LIMIT;
-}
-
 
 /* ── Score Modal ── */
 function openScoreModal() {

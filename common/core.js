@@ -106,12 +106,39 @@ const BoardScore = (() => {
             renderPlayers();
             renderHistory();
             renderBadge();
+            renderProgress();
 
             const btnNext = document.querySelector('.btn-next');
             if (btnNext) btnNext.style.opacity = roundHasScores() ? '1' : '0.4';
 
             // Hook de rendu spécifique au jeu
             if (config.onRender) config.onRender(state);
+        }
+
+        /* ── Progress bar ── */
+        function renderProgress() {
+            const wrap = $('progressWrap');
+            const bar  = $('progressBar');
+            const lbl  = $('progressLabel');
+            if (!wrap || !bar || !lbl) return;
+
+            if (state.players.length === 0) { wrap.style.display = 'none'; return; }
+            const maxScore = Math.max(...state.players.map(p => p.score));
+            if (maxScore <= 0) { wrap.style.display = 'none'; return; }
+            wrap.style.display = 'block';
+
+            // Le jeu peut fournir sa propre logique de progress (ex: limite configurable, infini…)
+            if (config.renderProgress) {
+                config.renderProgress(state, { wrap, bar, lbl, maxScore });
+                return;
+            }
+
+            // Fallback : si scoreLimit est dans le state, on l'utilise
+            const limit = state.scoreLimit || config.scoreLimit;
+            if (!limit) { wrap.style.display = 'none'; return; }
+            const pct = Math.min(100, (maxScore / limit) * 100);
+            bar.style.width = pct + '%';
+            lbl.textContent = 'max ' + maxScore + ' / ' + limit;
         }
 
         /* ── Badge ── */
