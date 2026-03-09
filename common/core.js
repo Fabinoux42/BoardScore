@@ -585,6 +585,30 @@ const BoardScore = (() => {
 
 
     /* ═══════════════════════════════════════════
+       MODAL CLOSE BUTTONS
+       Injecte un bouton ✕ dans chaque modale
+       ═══════════════════════════════════════════ */
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.modal-overlay .modal').forEach(function(modal) {
+            const overlay = modal.parentElement;
+            if (!overlay || !overlay.classList.contains('modal-overlay')) return;
+
+            // Créer le bouton fermer
+            const btn = document.createElement('button');
+            btn.className = 'modal-close-btn';
+            btn.textContent = '✕';
+            btn.setAttribute('aria-label', 'Fermer');
+            btn.addEventListener('click', function() {
+                overlay.classList.remove('open');
+            });
+
+            // Insérer avant le premier enfant de la modale
+            modal.insertBefore(btn, modal.firstChild);
+        });
+    });
+
+
+    /* ═══════════════════════════════════════════
        API publique du module
        ═══════════════════════════════════════════ */
     return {

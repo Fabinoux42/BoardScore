@@ -796,3 +796,38 @@ input[type="number"]:disabled { opacity: 0.4; }
     from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
+
+
+/* ══════════════════════════════════
+   MODAL CLOSE BUTTON (injected by core.js)
+   ══════════════════════════════════ */
+.modal-close-btn {
+    position: absolute;
+    top: 14px; left: 14px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    color: var(--muted);
+    font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    z-index: 5;
+    padding: 0;
+    line-height: 1;
+}
+.modal-close-btn:active {
+    transform: scale(0.9);
+    background: var(--glass-hover);
+}
+
+/* Make room for the close button — modal needs relative positioning */
+.modal-overlay .modal {
+    position: relative;
+}
+
+/* Adjust handle to not overlap */
+.modal-overlay .modal .modal-handle {
+    margin-top: 4px;
+}
