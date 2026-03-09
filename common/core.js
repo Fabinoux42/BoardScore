@@ -542,6 +542,29 @@ const BoardScore = (() => {
 
 
     /* ═══════════════════════════════════════════
+       THEME
+       ═══════════════════════════════════════════ */
+    function getTheme() {
+        return localStorage.getItem('boardscore_theme') || 'dark';
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        const btn = $('themeToggle');
+        if (btn) btn.textContent = theme === 'light' ? '☀️' : '🌙';
+    }
+
+    function toggleTheme() {
+        const next = getTheme() === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('boardscore_theme', next);
+        applyTheme(next);
+    }
+
+    // Appliquer le thème immédiatement au chargement
+    applyTheme(getTheme());
+
+
+    /* ═══════════════════════════════════════════
        API publique du module
        ═══════════════════════════════════════════ */
     return {
@@ -549,6 +572,7 @@ const BoardScore = (() => {
         getInitial,
         $,
         create,
+        toggleTheme,
     };
 
 })();

@@ -43,7 +43,25 @@
   <footer>Fait avec <span>♥</span> pour les soirées jeux</footer>
 </div>
 
+<!-- Theme toggle -->
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Changer de thème">🌙</button>
+
 <script>
+  /* ── THEME ── */
+  function getTheme() {
+    return localStorage.getItem('boardscore_theme') || 'dark';
+  }
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = theme === 'light' ? '☀️' : '🌙';
+  }
+  function toggleTheme() {
+    const next = getTheme() === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('boardscore_theme', next);
+    applyTheme(next);
+  }
+  applyTheme(getTheme());
   const GAMES = [
     {
       id: 'mexican-train',
