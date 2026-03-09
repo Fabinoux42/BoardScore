@@ -48,6 +48,7 @@ function curPlayer(st) { return st.players[st.currentPlayerIdx] || null; }
 const game = BoardScore.create({
     key: 'yams',
     emptyEmoji: '🎲',
+    highestWins: true,
     defaultState: {
         players: [], round: 1, history: [],
         currentPlayerIdx: 0,
@@ -295,6 +296,15 @@ function openNewGameFromWinner() { game.openNewGameFromWinner(); }
 function closeBgModal(e,id) { game.closeBgModal(e,id); }
 
 game.init();
-const st = game.getState();
-st.players.forEach(p => { if(!st.sheets[p.name]) st.sheets[p.name] = emptySheet(); });
-game.render();
+// Les sheets sont initialisées par onConfirmNewGame lors de la première visite (modale auto)
+// ou par la persistence (load). Pour la sécurité, on s'assure qu'elles existent.
+(function ensureSheets() {
+    const st = game.getState();
+    if (st.players.length > 0) {
+        let needsSave = false;
+        st.players.forEach(p => {
+            if (!st.sheets[p.name]) { st.sheets[p.name] = emptySheet(); needsSave = true; }
+        });
+        if (needsSave) { game.save(); game.render(); }
+    }
+})();
