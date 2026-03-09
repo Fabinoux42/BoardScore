@@ -1,0 +1,66 @@
+/* ═══════════════════════════════════════════
+   uno.css
+   Styles SPÉCIFIQUES au jeu Uno.
+   Les styles communs sont dans game.css.
+   ═══════════════════════════════════════════ */
+
+/* ── GAME ACCENT : rose Uno ── */
+:root {
+    --game-accent: #fb7185;
+    --game-accent-rgb: 251, 113, 133;
+    --game-accent-text: white;
+}
+
+/* ── HEADER ── */
+.header-title span { color: #fb7185; }
+
+/* ── PROGRESS BAR : gradient rose → rouge ── */
+.progress-bar-inner {
+    background: linear-gradient(90deg, #fb7185, var(--red));
+}
+
+/* ── SCORE ROW : winner lock ── */
+.score-row.is-winner .score-input-wrap { opacity: 0.3; pointer-events: none; }
+
+/* ── CARD DECO ── */
+.card-deco {
+    display: flex; gap: 8px; justify-content: center;
+    padding: 16px 0 4px; opacity: 0.25; font-size: 1.5rem;
+}
+
+/* ── UNO AIDE MÉMOIRE ── */
+.scoring-help {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+}
+.scoring-help-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fb7185;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.scoring-help-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 16px;
+    font-size: 0.8rem;
+}
+.sh-card { color: var(--text); }
+.sh-pts {
+    color: #fb7185;
+    font-weight: 700;
+    text-align: right;
+    font-family: 'Playfair Display', serif;
+}
+.sh-divider {
+    grid-column: 1 / -1;
+    height: 1px;
+    background: var(--border);
+    margin: 2px 0;
+}
