@@ -232,11 +232,22 @@
 
 .sh-done-val {
     font-family: 'Playfair Display', serif;
-    font-size: 0.9rem;
-    font-weight: 700;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #a3e635;
+    min-width: 36px;
+    text-align: right;
+}
+.sh-done-val.zero {
     color: var(--muted);
     opacity: 0.5;
 }
+
+/* Lignes done : légèrement atténuées mais lisibles */
+.sh-row.done {
+    opacity: 0.55;
+}
+.sh-row.done .sh-icon { opacity: 0.7; }
 
 .modal-btns { display: flex; gap: 8px; margin-top: 16px; }
 .modal-btns .modal-confirm { flex: 1; }

@@ -131,7 +131,16 @@ function renderSheet() {
             return '<div class="sh-row sacrifice-pick '+(isSP?'pend':'')+'" onclick="selectSacrifice(\''+cat.id+'\')"><span class="sh-icon">'+cat.icon+'</span><span class="sh-name">'+cat.name+'</span><div class="sh-inp-area"><span class="sh-sacrifice-label">'+(isSP?'✕ 0 pts':'–')+'</span></div></div>';
         }
 
-        // Normal mode
+        // Normal mode — already filled: show recorded value
+        if(disabled) {
+            const val = sheet[cat.id];
+            const valDisplay = val > 0 ? val : '0';
+            const valClass = val > 0 ? '' : 'zero';
+            return '<div class="sh-row done"><span class="sh-icon">'+cat.icon+'</span><span class="sh-name">'+cat.name+'</span>' +
+                '<div class="sh-inp-area"><span class="sh-done-val '+valClass+'">'+valDisplay+'</span></div></div>';
+        }
+
+        // Normal mode — open for input
         let inp='';
         if(cat.type==='dice') {
             // Sélecteur 0-5 occurrences
