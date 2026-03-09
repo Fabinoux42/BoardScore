@@ -168,7 +168,10 @@ const BoardScore = (() => {
                 return;
             }
 
-            const sorted = [...state.players].sort((a, b) => a.score - b.score);
+            const sortFn = config.highestWins
+                ? (a, b) => b.score - a.score
+                : (a, b) => a.score - b.score;
+            const sorted = [...state.players].sort(sortFn);
             const leader = sorted[0];
             const rounds = state.history.length;
 
@@ -279,7 +282,10 @@ const BoardScore = (() => {
 
         /* ── Winner Screen ── */
         function showWinner() {
-            const sorted = [...state.players].sort((a, b) => a.score - b.score);
+            const sortFn = config.highestWins
+                ? (a, b) => b.score - a.score   // plus haut = meilleur (Yam's)
+                : (a, b) => a.score - b.score;  // plus bas = meilleur (défaut)
+            const sorted = [...state.players].sort(sortFn);
             const winner = sorted[0];
 
             const nameEl = $('winnerName');
@@ -318,14 +324,20 @@ const BoardScore = (() => {
         /* ═══════════════════════════════════════════
            NEW GAME MODAL  —  100% partagé
            ═══════════════════════════════════════════ */
-        function openNewGameModal() {
-            ngMode = 'same';
+        function openNewGameModal(initialMode) {
+            ngMode = initialMode || 'same';
             ngKeepSet = new Set(state.players.map((_, i) => i));
             ngNewPlayers = [];
 
             renderNgModeCards();
             renderNgKeepList();
             renderNgNewList();
+
+            // Appliquer le mode initial (afficher la bonne section)
+            const keepSection = $('ng-keep-section');
+            const newSection = $('ng-new-section');
+            if (keepSection) keepSection.style.display = ngMode === 'same' ? 'block' : 'none';
+            if (newSection)  newSection.style.display  = ngMode === 'new'  ? 'block' : 'none';
 
             // Hook pour sections supplémentaires (domino set, dealer, score limit…)
             if (config.onOpenNewGameModal) config.onOpenNewGameModal(state);
@@ -486,9 +498,17 @@ const BoardScore = (() => {
            INIT
            ═══════════════════════════════════════════ */
         function init() {
+            const isFirstVisit = !localStorage.getItem(config.key + '_state');
             load();
             initKeyBindings();
             render();
+
+            // Première visite → ouvrir la modale new game en mode "nouveaux joueurs"
+            if (isFirstVisit) {
+                setTimeout(() => {
+                    openNewGameModal('new');
+                }, 200);
+            }
         }
 
 
