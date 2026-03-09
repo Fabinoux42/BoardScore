@@ -129,6 +129,72 @@
 }
 .sh-grand span:last-child { color: #a3e635; }
 
+/* ── Dice selector (section haute + 3X/4X) ── */
+.sh-dice-sel {
+    display: flex; align-items: center; gap: 3px; flex-wrap: nowrap;
+}
+.sh-dice-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.12s;
+    padding: 0;
+}
+.sh-dice-btn:active { transform: scale(0.9); }
+.sh-dice-btn.on {
+    border-color: #a3e635;
+    background: rgba(163, 230, 53, 0.2);
+    color: #a3e635;
+}
+.sh-dice-btn.dis { opacity: 0.25; pointer-events: none; }
+
+.sh-dice-result {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.85rem; font-weight: 900;
+    color: #a3e635; min-width: 36px; text-align: right;
+}
+
+/* ── Chance : input + bouton détail ── */
+.sh-chance-wrap {
+    display: flex; align-items: center; gap: 6px;
+}
+.sh-chance-detail-btn {
+    width: 34px; height: 34px; border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--glass); color: var(--text);
+    font-size: 0.75rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s;
+}
+.sh-chance-detail-btn:active { transform: scale(0.92); }
+.sh-chance-detail-btn.dis { opacity: 0.3; pointer-events: none; }
+
+.sh-chance-dice {
+    display: flex; gap: 4px; margin-top: 6px; justify-content: center;
+    width: 100%;
+}
+.sh-chance-d {
+    width: 36px; height: 36px;
+    background: var(--glass);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem; font-weight: 900; text-align: center;
+    outline: none; padding: 0;
+}
+.sh-chance-d:focus { border-color: #a3e635; }
+.sh-chance-d::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/* ── Score row : allow wrap for chance dice detail ── */
+.sh-inp-area {
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap; justify-content: flex-end;
+}
+
 /* ── Sacrifice mode ── */
 .sacrifice-hint {
     background: rgba(255, 85, 85, 0.1);

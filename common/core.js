@@ -168,7 +168,10 @@ const BoardScore = (() => {
                 return;
             }
 
-            const sorted = [...state.players].sort((a, b) => a.score - b.score);
+            const sortFn = config.highestWins
+                ? (a, b) => b.score - a.score
+                : (a, b) => a.score - b.score;
+            const sorted = [...state.players].sort(sortFn);
             const leader = sorted[0];
             const rounds = state.history.length;
 
