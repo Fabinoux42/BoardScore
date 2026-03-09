@@ -18,6 +18,13 @@ body::before {
     z-index: 0;
 }
 
+[data-theme="light"] body::before {
+    background-image:
+            radial-gradient(ellipse 80% 50% at 15% 10%, rgba(94, 50, 180, 0.06) 0%, transparent 55%),
+            radial-gradient(ellipse 60% 40% at 85% 85%, rgba(224, 92, 42, 0.04) 0%, transparent 55%),
+            radial-gradient(ellipse 50% 60% at 60% 30%, rgba(56, 189, 248, 0.03) 0%, transparent 50%);
+}
+
 /* ── HEADER ── */
 header {
     padding: 28px 20px 20px;
@@ -108,7 +115,7 @@ header {
     padding: 7px 14px;
     border-radius: 20px;
     border: 1.5px solid var(--border);
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--glass-subtle);
     color: var(--muted);
     font-family: 'DM Sans', sans-serif;
     font-weight: 600;
@@ -124,7 +131,7 @@ header {
 .filter-btn.active {
     background: var(--accent);
     border-color: var(--accent);
-    color: #1a0a2e;
+    color: var(--on-accent);
 }
 
 /* ── SECTION HEADER ── */
@@ -145,7 +152,7 @@ header {
 .games-count {
     font-size: 0.75rem;
     color: var(--muted);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--glass-subtle);
     border: 1px solid var(--border);
     padding: 2px 8px;
     border-radius: 10px;
@@ -228,7 +235,7 @@ header {
 .soon-badge {
     position: absolute;
     top: 12px; right: 12px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--glass);
     border: 1px solid var(--border);
     color: var(--muted);
     font-size: 0.62rem;
