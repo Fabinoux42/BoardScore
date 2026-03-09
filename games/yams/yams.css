@@ -443,3 +443,7 @@
     padding: 2px 0 0 4px;
     font-style: italic;
 }
+.h-detail-sacrifice {
+    color: var(--red);
+    font-weight: 600;
+}

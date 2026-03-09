@@ -724,19 +724,32 @@ function renderYamsHistory(state) {
 
     section.style.display = 'block';
     list.innerHTML = [...state.history].reverse().slice(0, 20).map(h => {
-        const detailHtml = h.detail
-            ? '<div class="h-detail">' + h.detail + '</div>'
-            : '';
+        // Détail pour Yam's bonus (avec "Sacrifié" en rouge si sacrifice)
+        let detailHtml = '';
+        if (h.detail) {
+            if (h.detail.startsWith('Sacrifié')) {
+                detailHtml = '<div class="h-detail"><span class="h-detail-sacrifice">Sacrifié :</span> ' + h.detail.replace('Sacrifié : ', '') + '</div>';
+            } else {
+                detailHtml = '<div class="h-detail">' + h.detail + '</div>';
+            }
+        }
+
+        // Score affiché : sacrifice normal → "Sacrifié → 0"
+        let scoreHtml = '';
+        if (h.value > 0) {
+            scoreHtml = '<span class="val bonus">+' + h.value + '</span>';
+        } else if (h.value === 0 && !h.detail) {
+            scoreHtml = '<span class="val penalty">Sacrifié → 0</span>';
+        } else {
+            scoreHtml = '<span class="val bonus">+' + h.value + '</span>';
+        }
+
         return '<div class="history-item">' +
             '<div class="history-item-header">' +
             '<span class="history-round-num">' + h.player + '</span>' +
             '<span class="h-tag yams-cat">' + h.category + '</span>' +
             '</div>' +
-            '<div class="history-scores">' +
-            '<span class="h-score"><span class="val ' + (h.value > 0 ? 'bonus' : 'penalty') + '">' +
-            (h.value > 0 ? '+' + h.value : '0') +
-            '</span></span>' +
-            '</div>' +
+            '<div class="history-scores"><span class="h-score">' + scoreHtml + '</span></div>' +
             detailHtml +
             '</div>';
     }).join('');
