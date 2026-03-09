@@ -189,3 +189,49 @@ setTimeout(() => {
     const hint = document.getElementById('installHint');
     if (hint) hint.style.display = 'none';
 }, 8000);
+
+
+/* ── RESET DATA ── */
+function confirmReset() {
+    const btn = document.querySelector('.reset-btn');
+    if (!btn) return;
+
+    // Premier clic → demande de confirmation
+    if (!btn.dataset.confirm) {
+        btn.dataset.confirm = '1';
+        btn.textContent = '⚠️ Confirmer la suppression ?';
+        btn.classList.add('confirm');
+        // Auto-annuler après 4 secondes
+        setTimeout(() => {
+            if (btn.dataset.confirm) {
+                delete btn.dataset.confirm;
+                btn.textContent = '🔄 Réinitialiser les données';
+                btn.classList.remove('confirm');
+            }
+        }, 4000);
+        return;
+    }
+
+    // Deuxième clic → suppression
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
+            key.startsWith('mxt_') ||
+            key.startsWith('skyjo_') ||
+            key.startsWith('rami_') ||
+            key.startsWith('uno_') ||
+            key.startsWith('yams_') ||
+            key === 'boardscore_theme'
+        )) {
+            keys.push(key);
+        }
+    }
+    keys.forEach(k => localStorage.removeItem(k));
+
+    btn.textContent = '✅ Données supprimées !';
+    btn.classList.remove('confirm');
+    btn.classList.add('done');
+
+    setTimeout(() => location.reload(), 800);
+}

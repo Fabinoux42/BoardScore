@@ -260,3 +260,33 @@ footer {
     letter-spacing: 0.5px;
 }
 footer span { color: var(--accent2); }
+
+.reset-btn {
+    display: block;
+    margin: 14px auto 0;
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+.reset-btn:hover { opacity: 1; }
+.reset-btn:active { transform: scale(0.96); }
+.reset-btn.confirm {
+    border-color: rgba(255, 85, 85, 0.4);
+    background: rgba(255, 85, 85, 0.08);
+    color: var(--red);
+    opacity: 1;
+}
+.reset-btn.done {
+    border-color: rgba(61, 220, 132, 0.4);
+    background: rgba(61, 220, 132, 0.08);
+    color: var(--green);
+    opacity: 1;
+}
