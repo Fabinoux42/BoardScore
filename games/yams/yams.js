@@ -15,8 +15,8 @@ const CATEGORIES = [
     { id: 'threeK', name: 'Brelan',      section: 'lower', type: 'ofkind', mult: 3, icon: '3X' },
     { id: 'fourK',  name: 'Carré',       section: 'lower', type: 'ofkind', mult: 4, icon: '4X' },
     { id: 'full',   name: 'Full',        section: 'lower', type: 'check', fixed: 25, icon: 'FH' },
-    { id: 'smStr',  name: 'Pte suite',   section: 'lower', type: 'check', fixed: 30, icon: 'S◻' },
-    { id: 'lgStr',  name: 'Gde suite',   section: 'lower', type: 'check', fixed: 40, icon: 'L◻' },
+    { id: 'smStr',  name: 'Pte suite',   section: 'lower', type: 'check', fixed: 30, icon: 'S' },
+    { id: 'lgStr',  name: 'Gde suite',   section: 'lower', type: 'check', fixed: 40, icon: 'L' },
     { id: 'yams',   name: "Yam's",       section: 'lower', type: 'check', fixed: 50, icon: '🎲' },
     { id: 'chance', name: 'Chance',       section: 'lower', type: 'chance', max: 30, icon: 'CH' },
 ];
@@ -143,12 +143,10 @@ function renderSheet() {
         // Normal mode — open for input
         let inp='';
         if(cat.type==='dice') {
-            // Sélecteur 0-5 occurrences
-            const count=isPend?pending.value/cat.face:0;
             inp='<div class="sh-dice-sel">';
-            for(let n=0;n<=5;n++){
+            for(let n=1;n<=5;n++){
                 const active=isPend&&(pending.value===n*cat.face);
-                inp+='<button class="sh-dice-btn '+(active?'on':'')+' '+(disabled?'dis':'')+'" '+(disabled?'':'onclick="selectDice(\''+cat.id+'\','+cat.face+','+n+')"')+'>'+n+'</button>';
+                inp+='<button class="sh-dice-btn '+(active?'on':'')+'" onclick="selectDice(\''+cat.id+'\','+cat.face+','+n+')">'+n+'</button>';
             }
             inp+='<span class="sh-dice-result">'+(isPend?'= '+pending.value:'')+'</span></div>';
         } else if(cat.type==='ofkind') {
