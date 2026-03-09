@@ -259,7 +259,7 @@
 }
 
 .turn-error-hint {
-    margin-top: 10px;
+    margin-bottom: 10px;
     background: rgba(255, 85, 85, 0.12);
     border: 1px solid rgba(255, 85, 85, 0.35);
     border-radius: 10px;
