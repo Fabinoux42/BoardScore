@@ -98,6 +98,8 @@ function openScoreModal() {
     BoardScore.$('scoreModalTitle').textContent='🎲 Tour de '+c.name;
     BoardScore.$('modalSub').textContent='Choisis une catégorie et entre ton score';
     renderSheet();
+    const errHint = BoardScore.$('turnErrorHint');
+    if (errHint) errHint.style.display = 'none';
     BoardScore.$('scoreModal').classList.add('open');
 }
 
@@ -253,19 +255,32 @@ function enterSacrificeMode() { sacrificeMode=true; game.getState().turnPending=
 function cancelSacrifice() { sacrificeMode=false; game.getState().turnPending={}; renderSheet(); }
 function selectSacrifice(catId) { game.getState().turnPending={catId,value:0}; renderSheet(); }
 
+/* ── Show error inside modal ── */
+function showTurnError(msg) {
+    const hint = BoardScore.$('turnErrorHint');
+    if (!hint) return;
+    hint.textContent = msg;
+    hint.style.display = 'block';
+    // Shake the buttons area
+    const btns = document.querySelector('.modal-btns');
+    if (btns) { btns.style.transform = 'scale(1.02)'; setTimeout(() => btns.style.transform = '', 200); }
+    clearTimeout(hint._timer);
+    hint._timer = setTimeout(() => hint.style.display = 'none', 3000);
+}
+
 /* ── Confirm ── */
 function confirmTurn() {
     const state=game.getState();
     const p=state.turnPending;
 
     if(!p.catId) {
-        game.showRoundError('⚠️ Choisis une catégorie !');
+        showTurnError('⚠️ Entre un score ou utilise Sacrifier avant de valider !');
         return;
     }
 
-    // En mode normal (pas sacrifice), vérifier qu'une valeur a été entrée
-    if(!sacrificeMode && (p.value===undefined || p.value===null)) {
-        game.showRoundError('⚠️ Entre un score ou utilise Sacrifier !');
+    // En mode normal (pas sacrifice), vérifier qu'une valeur a été saisie
+    if(!sacrificeMode && (p.value === undefined || p.value === null)) {
+        showTurnError('⚠️ Entre un score ou utilise Sacrifier !');
         return;
     }
 
