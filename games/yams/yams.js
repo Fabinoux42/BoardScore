@@ -319,24 +319,27 @@ function renderSheet() {
                 'onfocus="shChanceFocus()" oninput="shChanceInput()" />' +
                 '<button class="sh-chance-detail-btn" onclick="toggleChanceDetail()">🎲5</button>' +
                 '</div>';
+        }
 
-            // Détail des 5 dés
-            if (isPend && pending.chanceDetail) {
-                inp += '<div class="sh-chance-dice">';
-                for (let d = 0; d < 5; d++) {
-                    const dv = pending.chanceDice ? pending.chanceDice[d] || '' : '';
-                    inp += '<input type="number" class="sh-chance-d" id="sh_cd_' + d + '" ' +
-                        'value="' + dv + '" min="1" max="6" placeholder="?" ' +
-                        'oninput="updateChanceDice()" />';
-                }
-                inp += '</div>';
+        // Build chance dice detail HTML (will go after sh-inp-area, inside sh-row)
+        let chanceDice = '';
+        if (cat.type === 'chance' && isPend && pending.chanceDetail) {
+            chanceDice = '<div class="sh-chance-dice">';
+            for (let d = 0; d < 5; d++) {
+                const dv = pending.chanceDice ? pending.chanceDice[d] || '' : '';
+                chanceDice += '<input type="number" class="sh-chance-d" id="sh_cd_' + d + '" ' +
+                    'value="' + dv + '" min="1" max="6" placeholder="?" ' +
+                    'oninput="updateChanceDice()" />';
             }
+            chanceDice += '</div>';
         }
 
         return '<div class="sh-row ' + (isPend ? 'pend' : '') + '">' +
             '<span class="sh-icon">' + cat.icon + '</span>' +
             '<span class="sh-name">' + cat.name + '</span>' +
-            '<div class="sh-inp-area">' + inp + '</div></div>';
+            '<div class="sh-inp-area">' + inp + '</div>' +
+            chanceDice +
+            '</div>';
     }
 
     // Assembler le HTML

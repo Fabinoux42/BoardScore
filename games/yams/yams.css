@@ -247,11 +247,18 @@
 .sh-chance-detail-btn.dis { opacity: 0.3; pointer-events: none; }
 
 .sh-chance-dice {
-    display: flex; gap: 4px; margin-top: 6px; justify-content: center;
+    display: flex; gap: 6px; justify-content: center;
     width: 100%;
+    flex-basis: 100%;
+    padding-top: 8px;
+    animation: calcSlide 0.2s ease;
+}
+@keyframes calcSlide {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 .sh-chance-d {
-    width: 36px; height: 36px;
+    width: 38px; height: 38px;
     background: var(--glass);
     border: 1.5px solid var(--border);
     border-radius: 10px;
@@ -263,11 +270,8 @@
 .sh-chance-d:focus { border-color: #a3e635; }
 .sh-chance-d::-webkit-inner-spin-button { -webkit-appearance: none; }
 
-/* ── Score row : allow wrap for chance dice detail ── */
-.sh-inp-area {
-    display: flex; align-items: center; gap: 6px;
-    flex-wrap: wrap; justify-content: flex-end;
-}
+/* ── Score row : allow wrap for chance dice ── */
+.sh-row { flex-wrap: wrap; }
 
 /* ── Sacrifice mode ── */
 .sacrifice-hint {
