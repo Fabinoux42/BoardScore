@@ -81,10 +81,13 @@
         <div class="modal-handle"></div>
         <div class="modal-title" id="scoreModalTitle">🎲 Tour</div>
         <div class="modal-sub" id="modalSub"></div>
+        <div id="sacrificeHint" class="sacrifice-hint" style="display:none">
+            ⚠️ Choisis la catégorie à sacrifier (elle sera mise à 0)
+        </div>
         <div id="scoreSheet"></div>
         <div class="modal-btns">
-            <button class="modal-confirm" onclick="confirmTurn()">✅ Valider</button>
-            <button class="btn-skip" onclick="confirmTurn()">0️⃣ Sacrifier</button>
+            <button class="modal-confirm" id="btnConfirm" onclick="confirmTurn()">✅ Valider</button>
+            <button class="btn-skip" id="btnSkip" onclick="enterSacrificeMode()">0️⃣ Sacrifier</button>
         </div>
     </div>
 </div>

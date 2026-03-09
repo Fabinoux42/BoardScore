@@ -129,6 +129,49 @@
 }
 .sh-grand span:last-child { color: #a3e635; }
 
+/* ── Sacrifice mode ── */
+.sacrifice-hint {
+    background: rgba(255, 85, 85, 0.1);
+    border: 1px solid rgba(255, 85, 85, 0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    color: var(--red);
+    margin-bottom: 12px;
+    text-align: center;
+    line-height: 1.4;
+    animation: fadeIn 0.2s ease;
+}
+
+.sh-row.sacrifice-pick {
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+}
+.sh-row.sacrifice-pick:active { transform: scale(0.98); }
+.sh-row.sacrifice-pick.pend {
+    background: rgba(255, 85, 85, 0.1);
+    border-color: rgba(255, 85, 85, 0.4);
+}
+
+.sh-sacrifice-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+.sh-row.sacrifice-pick.pend .sh-sacrifice-label {
+    color: var(--red);
+    font-weight: 700;
+}
+
+.sh-done-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--muted);
+    opacity: 0.5;
+}
+
 .modal-btns { display: flex; gap: 8px; margin-top: 16px; }
 .modal-btns .modal-confirm { flex: 1; }
 .btn-skip {

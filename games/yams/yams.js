@@ -31,6 +31,7 @@ const UPPER_BONUS = 35;
 const TOTAL_TURNS = 13;
 
 let ngFirstIdx = 0;
+let sacrificeMode = false;
 
 function emptySheet() {
     const s = {};
@@ -113,6 +114,7 @@ function openScoreModal() {
     if (gameOver(state)) { game.showWinner(); return; }
     state.players.forEach(p => { if (!state.sheets[p.name]) state.sheets[p.name] = emptySheet(); });
     state.turnPending = {};
+    sacrificeMode = false;
     const c = curPlayer(state);
     BoardScore.$('scoreModalTitle').textContent = '🎲 Tour de ' + c.name;
     BoardScore.$('modalSub').textContent = 'Choisis une catégorie et entre ton score';
@@ -129,10 +131,43 @@ function renderSheet() {
     const lCats = CATEGORIES.filter(c=>c.section==='lower');
     const uTot = upperTotal(sheet);
 
+    // Sacrifice hint
+    const hintEl = BoardScore.$('sacrificeHint');
+    if (hintEl) hintEl.style.display = sacrificeMode ? 'block' : 'none';
+
+    // Update buttons
+    const btnSkip = BoardScore.$('btnSkip');
+    if (btnSkip) {
+        if (sacrificeMode) {
+            btnSkip.textContent = '↩ Annuler';
+            btnSkip.setAttribute('onclick', 'cancelSacrifice()');
+        } else {
+            btnSkip.textContent = '0️⃣ Sacrifier';
+            btnSkip.setAttribute('onclick', 'enterSacrificeMode()');
+        }
+    }
+
     function row(cat) {
         const done = sheet[cat.id] !== null;
         const isPend = pending.catId === cat.id;
         const disabled = done && !isPend;
+
+        // Mode sacrifice : les catégories vides deviennent des boutons cliquables
+        if (sacrificeMode) {
+            if (done) {
+                return '<div class="sh-row done">' +
+                    '<span class="sh-icon">' + cat.icon + '</span>' +
+                    '<span class="sh-name">' + cat.name + '</span>' +
+                    '<div class="sh-inp-area"><span class="sh-done-val">' + sheet[cat.id] + '</span></div></div>';
+            }
+            const isSacrificePend = pending.catId === cat.id;
+            return '<div class="sh-row sacrifice-pick ' + (isSacrificePend ? 'pend' : '') + '" onclick="selectSacrifice(\'' + cat.id + '\')">' +
+                '<span class="sh-icon">' + cat.icon + '</span>' +
+                '<span class="sh-name">' + cat.name + '</span>' +
+                '<div class="sh-inp-area"><span class="sh-sacrifice-label">' + (isSacrificePend ? '✕ 0 pts' : '–') + '</span></div></div>';
+        }
+
+        // Mode normal
         let inp = '';
         if (cat.type === 'check') {
             const on = isPend ? pending.value > 0 : (done && sheet[cat.id] > 0);
@@ -158,6 +193,23 @@ function renderSheet() {
     h += '<div class="sh-grand"><span>Total</span><span>' + grandTotal(sheet) + '</span></div>';
 
     BoardScore.$('scoreSheet').innerHTML = h;
+}
+
+function enterSacrificeMode() {
+    sacrificeMode = true;
+    game.getState().turnPending = {};
+    renderSheet();
+}
+
+function cancelSacrifice() {
+    sacrificeMode = false;
+    game.getState().turnPending = {};
+    renderSheet();
+}
+
+function selectSacrifice(catId) {
+    game.getState().turnPending = { catId: catId, value: 0 };
+    renderSheet();
 }
 
 function shFocus(id) {
@@ -203,6 +255,7 @@ function confirmTurn() {
         scores: Object.fromEntries(state.players.map(pl=>[pl.name, grandTotal(state.sheets[pl.name]||{})]))
     });
     state.turnPending = {};
+    sacrificeMode = false;
     state.currentPlayerIdx = (state.currentPlayerIdx + 1) % state.players.length;
     BoardScore.$('scoreModal').classList.remove('open');
     game.save(); game.render();
