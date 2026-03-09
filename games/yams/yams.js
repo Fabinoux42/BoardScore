@@ -260,17 +260,15 @@ function renderSheet() {
             const val = sheet[cat.id];
             const valClass = val > 0 ? '' : 'zero';
 
-            // Cas spécial : Yam's déjà scoré à 50 → permettre Yam's bonus
+            // Cas spécial : Yam's déjà scoré à 50 → bouton pour ouvrir la modale bonus
             if (cat.id === 'yams' && val === 50) {
-                const isBonusPend = pending.yamsBonus === true;
-                return '<div class="sh-row ' + (isBonusPend ? 'pend' : 'done') + '">' +
+                const yb = sheet.yamsBonus || 0;
+                return '<div class="sh-row done yams-bonus-row">' +
                     '<span class="sh-icon">' + cat.icon + '</span>' +
                     '<span class="sh-name">' + cat.name + '</span>' +
                     '<div class="sh-inp-area">' +
                     '<span class="sh-done-val">50</span>' +
-                    '<button class="sh-yams-bonus-btn ' + (isBonusPend ? 'on' : '') + '" onclick="toggleYamsBonus()">' +
-                    (isBonusPend ? '🎲 +100 !' : '🎲 Bonus ?') +
-                    '</button>' +
+                    '<button class="sh-yams-bonus-btn" onclick="openYamsBonusModal()">🎲 Bonus' + (yb > 0 ? ' (+' + yb + ')' : ' ?') + '</button>' +
                     '</div></div>';
             }
 
@@ -388,19 +386,149 @@ function toggleCheck(id, fixed) {
     renderSheet();
 }
 
-/* Yam's bonus : le joueur déclare avoir refait un Yam's */
-function toggleYamsBonus() {
-    const state = game.getState();
-    const p = state.turnPending;
+/* Yam's bonus : sous-modale complète */
+let ybDieFace = null;  // dé du Yam's bonus (1-6)
+let ybCatId = null;    // catégorie choisie pour placer le score
 
-    if (p.yamsBonus) {
-        // Désactiver le bonus
-        delete p.yamsBonus;
-    } else {
-        // Activer le bonus — le joueur doit aussi choisir une autre catégorie pour son score
-        p.yamsBonus = true;
+function openYamsBonusModal() {
+    ybDieFace = null;
+    ybCatId = null;
+    renderYbDicePick();
+    BoardScore.$('ybStep2').style.display = 'none';
+    const err = BoardScore.$('ybErrorHint');
+    if (err) err.style.display = 'none';
+    BoardScore.$('yamsBonusModal').classList.add('open');
+}
+
+function cancelYamsBonus() {
+    BoardScore.$('yamsBonusModal').classList.remove('open');
+}
+
+function renderYbDicePick() {
+    let html = '';
+    for (let d = 1; d <= 6; d++) {
+        const active = ybDieFace === d;
+        html += '<button class="sh-dice-btn yb-die ' + (active ? 'on' : '') + '" onclick="selectYbDie(' + d + ')">' + d + '</button>';
     }
-    renderSheet();
+    BoardScore.$('ybDicePick').innerHTML = html;
+}
+
+function selectYbDie(die) {
+    ybDieFace = die;
+    ybCatId = null;
+    renderYbDicePick();
+    renderYbCatList();
+    BoardScore.$('ybStep2').style.display = 'block';
+}
+
+function renderYbCatList() {
+    const state = game.getState();
+    const current = curPlayer(state);
+    const sheet = state.sheets[current.name];
+
+    // Construire la liste des catégories jouables selon les règles Joker :
+    // 1. La case de la section haute correspondant au dé
+    // 2. Toutes les cases de la section basse (sauf Yam's)
+    // 3. Chance
+    // Les cases déjà remplies sont affichées grisées
+
+    const jokerCats = [];
+
+    // Section haute correspondante
+    const upperCat = CATEGORIES.find(c => c.type === 'dice' && c.face === ybDieFace);
+    if (upperCat) {
+        const val = ybDieFace * 5; // max possible (5 dés identiques)
+        jokerCats.push({ cat: upperCat, value: val, label: upperCat.icon + ' ' + upperCat.name + ' → ' + val + ' pts' });
+    }
+
+    // Section basse (sauf Yam's lui-même)
+    const lowerCatsAvail = [
+        { id: 'threeK', value: ybDieFace * 5, label: '3X Brelan → ' + (ybDieFace * 5) + ' pts' },
+        { id: 'fourK',  value: ybDieFace * 5, label: '4X Carré → ' + (ybDieFace * 5) + ' pts' },
+        { id: 'full',   value: 25, label: 'FH Full → 25 pts' },
+        { id: 'smStr',  value: 30, label: 'S Pte suite → 30 pts' },
+        { id: 'lgStr',  value: 40, label: 'L Gde suite → 40 pts' },
+        { id: 'chance', value: ybDieFace * 5, label: 'CH Chance → ' + (ybDieFace * 5) + ' pts' },
+    ];
+    lowerCatsAvail.forEach(lc => {
+        const cat = CATEGORIES.find(c => c.id === lc.id);
+        if (cat) jokerCats.push({ cat, value: lc.value, label: lc.label });
+    });
+
+    let html = '';
+    jokerCats.forEach(jc => {
+        const done = sheet[jc.cat.id] !== null;
+        const selected = ybCatId === jc.cat.id;
+        if (done) {
+            html += '<div class="yb-cat-row done">' +
+                '<span class="yb-cat-label">' + jc.label + '</span>' +
+                '<span class="sh-done-val">' + sheet[jc.cat.id] + '</span></div>';
+        } else {
+            html += '<div class="yb-cat-row ' + (selected ? 'selected' : '') + '" onclick="selectYbCat(\'' + jc.cat.id + '\',' + jc.value + ')">' +
+                '<span class="yb-cat-label">' + jc.label + '</span>' +
+                (selected ? '<span class="yb-cat-check">✓</span>' : '') + '</div>';
+        }
+    });
+
+    BoardScore.$('ybCatList').innerHTML = html;
+}
+
+function selectYbCat(catId, value) {
+    ybCatId = catId;
+    // Stocker aussi la valeur
+    game.getState()._ybValue = value;
+    renderYbCatList();
+}
+
+function confirmYamsBonus() {
+    const state = game.getState();
+
+    if (!ybDieFace) {
+        const hint = BoardScore.$('ybErrorHint');
+        if (hint) { hint.textContent = '⚠️ Choisis avec quel dé tu as fait ton Yam\'s !'; hint.style.display = 'block'; setTimeout(() => hint.style.display = 'none', 3000); }
+        return;
+    }
+    if (!ybCatId) {
+        const hint = BoardScore.$('ybErrorHint');
+        if (hint) { hint.textContent = '⚠️ Choisis où placer ton score !'; hint.style.display = 'block'; setTimeout(() => hint.style.display = 'none', 3000); }
+        return;
+    }
+
+    const current = curPlayer(state);
+    const sheet = state.sheets[current.name];
+    const value = state._ybValue || 0;
+
+    // Écrire le score dans la catégorie choisie
+    sheet[ybCatId] = value;
+    // Ajouter le bonus +100
+    sheet.yamsBonus = (sheet.yamsBonus || 0) + 100;
+    // Recalculer
+    current.score = grandTotal(sheet);
+
+    // Historique
+    const cat = CATEGORIES.find(c => c.id === ybCatId);
+    state.history.push({
+        round: state.history.length + 1,
+        player: current.name,
+        category: '🎲+100 ' + (cat ? cat.icon + ' ' + cat.name : ybCatId),
+        value: value + 100,
+        scores: Object.fromEntries(
+            state.players.map(pl => [pl.name, grandTotal(state.sheets[pl.name] || {})])
+        ),
+    });
+
+    // Passer au joueur suivant
+    state.currentPlayerIdx = (state.currentPlayerIdx + 1) % state.players.length;
+    delete state._ybValue;
+
+    // Fermer les modales
+    BoardScore.$('yamsBonusModal').classList.remove('open');
+    BoardScore.$('scoreModal').classList.remove('open');
+
+    game.save();
+    game.render();
+
+    if (gameOver(state)) setTimeout(() => game.showWinner(), 400);
 }
 
 /* Chance — input libre */
@@ -530,22 +658,15 @@ function confirmTurn() {
     const sheet = state.sheets[current.name];
     sheet[p.catId] = p.value || 0;
 
-    // Yam's bonus : si le joueur avait déjà 50 dans la case Yam's
-    // et qu'il a marqué un Yam's bonus ce tour
-    if (p.yamsBonus) {
-        sheet.yamsBonus = (sheet.yamsBonus || 0) + 100;
-    }
-
     current.score = grandTotal(sheet);
 
     // Historique
     const cat = CATEGORIES.find(x => x.id === p.catId);
-    const historyValue = (p.value || 0) + (p.yamsBonus ? 100 : 0);
     state.history.push({
         round: state.history.length + 1,
         player: current.name,
-        category: (p.yamsBonus ? '🎲+100 ' : '') + (cat ? cat.icon + ' ' + cat.name : p.catId),
-        value: historyValue,
+        category: cat ? cat.icon + ' ' + cat.name : p.catId,
+        value: sheet[p.catId],
         scores: Object.fromEntries(
             state.players.map(pl => [pl.name, grandTotal(state.sheets[pl.name] || {})])
         ),

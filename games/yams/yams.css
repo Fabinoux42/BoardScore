@@ -125,10 +125,46 @@
     white-space: nowrap;
 }
 .sh-yams-bonus-btn:active { transform: scale(0.95); }
-.sh-yams-bonus-btn.on {
-    background: rgba(163, 230, 53, 0.2);
-    border-color: #a3e635;
-    animation: fadeIn 0.2s ease;
+
+.yams-bonus-row { opacity: 0.75 !important; }
+
+/* ── Yam's bonus modal ── */
+.yb-step { margin-bottom: 16px; }
+
+.yb-dice-pick {
+    display: flex; gap: 6px; flex-wrap: wrap;
+}
+.yb-die {
+    width: 40px !important; height: 40px !important;
+    font-size: 1.1rem !important;
+    border-radius: 12px !important;
+}
+
+.yb-cat-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; border-radius: 10px;
+    background: var(--glass-subtle);
+    margin-bottom: 4px; cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+}
+.yb-cat-row:active { transform: scale(0.98); }
+.yb-cat-row.selected {
+    background: rgba(163, 230, 53, 0.1);
+    border-color: rgba(163, 230, 53, 0.4);
+}
+.yb-cat-row.done {
+    opacity: 0.35; cursor: default;
+    pointer-events: none;
+}
+
+.yb-cat-label {
+    font-size: 0.85rem; font-weight: 500;
+}
+.yb-cat-row.selected .yb-cat-label { color: #a3e635; font-weight: 600; }
+
+.yb-cat-check {
+    color: #a3e635; font-weight: 900; font-size: 1rem;
 }
 
 .sh-sub, .sh-grand {

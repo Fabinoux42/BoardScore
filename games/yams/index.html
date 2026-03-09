@@ -150,6 +150,31 @@
     </div>
 </div>
 
+<!-- Yam's Bonus Modal -->
+<div class="modal-overlay" id="yamsBonusModal" onclick="closeBgModal(event,'yamsBonusModal')">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🎲 Yam's Bonus !</div>
+        <div class="modal-sub">+100 pts ! Choisis avec quel dé, puis où placer ton score.</div>
+
+        <div class="yb-step" id="ybStep1">
+            <div class="newgame-section-title">Quel dé ?</div>
+            <div class="yb-dice-pick" id="ybDicePick"></div>
+        </div>
+
+        <div class="yb-step" id="ybStep2" style="display:none">
+            <div class="newgame-section-title">Placer le score dans…</div>
+            <div id="ybCatList"></div>
+        </div>
+
+        <div id="ybErrorHint" class="turn-error-hint" style="display:none"></div>
+        <div class="modal-btns">
+            <button class="modal-confirm" onclick="confirmYamsBonus()">✅ Valider le bonus</button>
+            <button class="btn-skip" onclick="cancelYamsBonus()">↩ Annuler</button>
+        </div>
+    </div>
+</div>
+
 <!-- Winner screen -->
 <div class="winner-overlay" id="winnerScreen">
     <div class="winner-trophy">🏆</div>
