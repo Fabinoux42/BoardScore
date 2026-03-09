@@ -7,7 +7,7 @@
 /* ── CATÉGORIES ── */
 const CATEGORIES = [
     // Section haute : sélecteur × combien de dés (1-5)
-    { id: 'ones',   name: 'As',      section: 'upper', face: 1, type: 'dice',   icon: '⚀' },
+    { id: 'ones',   name: 'Un',      section: 'upper', face: 1, type: 'dice',   icon: '⚀' },
     { id: 'twos',   name: 'Deux',    section: 'upper', face: 2, type: 'dice',   icon: '⚁' },
     { id: 'threes', name: 'Trois',   section: 'upper', face: 3, type: 'dice',   icon: '⚂' },
     { id: 'fours',  name: 'Quatre',  section: 'upper', face: 4, type: 'dice',   icon: '⚃' },
@@ -520,13 +520,18 @@ function confirmYamsBonus() {
     // Recalculer
     current.score = grandTotal(sheet);
 
-    // Historique
+    // Historique — montrer le bonus et le placement séparément
     const cat = CATEGORIES.find(c => c.id === ybCatId);
+    const catLabel = cat ? cat.icon + ' ' + cat.name : ybCatId;
+    const isSacrifice = value === 0;
     state.history.push({
         round: state.history.length + 1,
         player: current.name,
-        category: '🎲+100 ' + (cat ? cat.icon + ' ' + cat.name : ybCatId),
-        value: value + 100,
+        category: '🎲 Bonus Yam\'s',
+        value: 100,
+        detail: isSacrifice
+            ? 'Sacrifié : ' + catLabel
+            : catLabel + ' +' + value,
         scores: Object.fromEntries(
             state.players.map(pl => [pl.name, grandTotal(state.sheets[pl.name] || {})])
         ),
@@ -718,19 +723,23 @@ function renderYamsHistory(state) {
     }
 
     section.style.display = 'block';
-    list.innerHTML = [...state.history].reverse().slice(0, 20).map(h =>
-        '<div class="history-item">' +
-        '<div class="history-item-header">' +
-        '<span class="history-round-num">' + h.player + '</span>' +
-        '<span class="h-tag yams-cat">' + h.category + '</span>' +
-        '</div>' +
-        '<div class="history-scores">' +
-        '<span class="h-score"><span class="val ' + (h.value > 0 ? '' : 'penalty') + '">' +
-        (h.value > 0 ? '+' + h.value : '0') +
-        '</span></span>' +
-        '</div>' +
-        '</div>'
-    ).join('');
+    list.innerHTML = [...state.history].reverse().slice(0, 20).map(h => {
+        const detailHtml = h.detail
+            ? '<div class="h-detail">' + h.detail + '</div>'
+            : '';
+        return '<div class="history-item">' +
+            '<div class="history-item-header">' +
+            '<span class="history-round-num">' + h.player + '</span>' +
+            '<span class="h-tag yams-cat">' + h.category + '</span>' +
+            '</div>' +
+            '<div class="history-scores">' +
+            '<span class="h-score"><span class="val ' + (h.value > 0 ? 'bonus' : 'penalty') + '">' +
+            (h.value > 0 ? '+' + h.value : '0') +
+            '</span></span>' +
+            '</div>' +
+            detailHtml +
+            '</div>';
+    }).join('');
 }
 
 
