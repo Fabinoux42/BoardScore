@@ -1,0 +1,195 @@
+/* ═══════════════════════════════════════════
+   yams.css — Styles spécifiques au Yam's
+   ═══════════════════════════════════════════ */
+
+:root {
+    --game-accent: #a3e635;
+    --game-accent-rgb: 163, 230, 53;
+    --game-accent-text: #1a0a2e;
+}
+
+.header-title span { color: #a3e635; }
+
+/* ── Current player indicator ── */
+.player-card.is-current { border-color: rgba(163, 230, 53, 0.5); }
+
+/* ── Turn bar ── */
+.turn-bar {
+    background: rgba(163, 230, 53, 0.08);
+    border-bottom: 1px solid rgba(163, 230, 53, 0.2);
+    padding: 10px 16px 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    position: sticky; top: 65px; z-index: 90;
+    backdrop-filter: blur(8px);
+}
+.turn-current-line { display: flex; align-items: center; gap: 8px; }
+.turn-icon { font-size: 1rem; }
+.turn-pill {
+    background: #a3e635; color: #1a0a2e;
+    font-weight: 700; font-size: 0.9rem;
+    padding: 3px 14px; border-radius: 20px;
+}
+.turn-label { font-size: 0.8rem; color: var(--muted); }
+.turn-next-line { display: flex; align-items: center; gap: 6px; }
+.turn-next-label { font-size: 0.72rem; color: var(--muted); }
+.turn-next-name {
+    font-size: 0.8rem; font-weight: 700; color: #a3e635;
+    background: rgba(163, 230, 53, 0.12);
+    padding: 2px 10px; border-radius: 10px;
+    border: 1px solid rgba(163, 230, 53, 0.25);
+}
+
+/* ── Compare button ── */
+.btn-compare {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600; font-size: 0.85rem;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 8px;
+    width: 100%;
+    justify-content: center;
+}
+.btn-compare:active { transform: scale(0.97); }
+
+/* ── Bottom bar override ── */
+.btn-score { background: #a3e635; color: #1a0a2e; }
+.btn-next { background: #a3e635; color: #1a0a2e; }
+
+/* ═══════════════════════════════════
+   SCORE SHEET (dans la modale)
+   ═══════════════════════════════════ */
+.sh-label {
+    font-size: 0.65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: #a3e635; margin: 14px 0 8px; padding-left: 2px;
+}
+
+.sh-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 10px;
+    background: var(--glass-subtle);
+    margin-bottom: 4px; transition: all 0.15s;
+}
+.sh-row.done { opacity: 0.4; }
+.sh-row.pend { background: rgba(163, 230, 53, 0.1); border: 1px solid rgba(163, 230, 53, 0.3); }
+
+.sh-icon {
+    font-size: 0.8rem; font-weight: 800;
+    min-width: 26px; text-align: center;
+    color: #a3e635;
+}
+.sh-name { flex: 1; font-size: 0.85rem; font-weight: 500; }
+
+.sh-inp-area { display: flex; align-items: center; gap: 6px; }
+
+.sh-inp {
+    width: 52px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 5px 4px;
+    color: var(--text);
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 700; text-align: center;
+    outline: none;
+}
+.sh-inp:focus { border-color: #a3e635; }
+.sh-inp:disabled { opacity: 0.3; }
+.sh-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.sh-check {
+    width: 34px; height: 34px; border-radius: 10px;
+    border: 2px solid var(--border);
+    background: transparent; color: transparent;
+    font-size: 1.1rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s;
+}
+.sh-check.on { border-color: #a3e635; background: rgba(163, 230, 53, 0.15); color: #a3e635; }
+.sh-check.dis { opacity: 0.3; cursor: default; }
+
+.sh-fix { font-size: 0.7rem; color: var(--muted); }
+
+.sh-sub, .sh-grand {
+    display: flex; justify-content: space-between;
+    padding: 6px 10px; font-size: 0.78rem;
+    color: var(--muted); font-weight: 600;
+}
+.sh-sub.earned span:last-child { color: #a3e635; font-weight: 700; }
+
+.sh-grand {
+    background: rgba(163, 230, 53, 0.1);
+    border-radius: 10px; margin-top: 8px;
+    font-size: 0.95rem; color: var(--text);
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+}
+.sh-grand span:last-child { color: #a3e635; }
+
+.modal-btns { display: flex; gap: 8px; margin-top: 16px; }
+.modal-btns .modal-confirm { flex: 1; }
+.btn-skip {
+    padding: 15px 20px; border-radius: 14px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 0.85rem;
+    cursor: pointer;
+}
+
+/* ═══════════════════════════════════
+   COMPARE MODAL
+   ═══════════════════════════════════ */
+.cmp-grid {
+    display: grid; gap: 2px;
+    font-size: 0.75rem;
+}
+.cmp-h {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-weight: 700; font-size: 0.72rem; padding: 6px 2px;
+    color: var(--text);
+}
+.cmp-av {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: #1a0a2e; font-size: 0.75rem;
+    font-family: 'Playfair Display', serif;
+}
+.cmp-sec {
+    font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: #a3e635;
+    padding: 10px 4px 4px; background: var(--glass-subtle);
+    border-radius: 6px; margin-top: 4px;
+}
+.cmp-c {
+    font-size: 0.72rem; color: var(--muted);
+    padding: 5px 4px; display: flex; align-items: center;
+}
+.cmp-v {
+    text-align: center; padding: 5px 2px;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700; color: var(--text); font-size: 0.8rem;
+}
+.cmp-v.empty { color: var(--muted); opacity: 0.4; }
+.cmp-tot { font-weight: 700; border-top: 1px solid var(--border); }
+.cmp-tot.earned { color: #a3e635; }
+.cmp-grand {
+    font-weight: 900; font-size: 0.9rem;
+    border-top: 2px solid #a3e635; padding-top: 8px;
+    color: #a3e635;
+}
+.cmp-c.cmp-grand { color: var(--text); }
+
+/* ── History tags ── */
+.h-tag.yams-cat {
+    background: rgba(163, 230, 53, 0.12);
+    color: #a3e635;
+    font-size: 0.65rem;
+}
+
+/* ── Dice deco ── */
+.dice-deco {
+    display: flex; gap: 10px; justify-content: center;
+    padding: 16px 0 4px; opacity: 0.2; font-size: 1.6rem;
+}
