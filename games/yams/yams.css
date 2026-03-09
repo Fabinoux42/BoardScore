@@ -167,6 +167,26 @@
     color: #a3e635; font-weight: 900; font-size: 1rem;
 }
 
+.yb-icon {
+    color: #a3e635; font-weight: 800; font-size: 0.8rem;
+}
+
+.yb-sacrifice-notice {
+    padding: 10px 12px; margin-top: 10px;
+    font-size: 0.8rem; color: var(--muted);
+    text-align: center; font-style: italic;
+}
+
+.yb-cat-row.sacrifice {
+    border-color: rgba(255, 85, 85, 0.2);
+}
+.yb-cat-row.sacrifice.selected {
+    background: rgba(255, 85, 85, 0.08);
+    border-color: rgba(255, 85, 85, 0.4);
+}
+.yb-cat-row.sacrifice.selected .yb-cat-label { color: var(--red); }
+.yb-cat-row.sacrifice .yb-icon { color: var(--red); }
+
 .sh-sub, .sh-grand {
     display: flex; justify-content: space-between;
     padding: 6px 10px; font-size: 0.78rem;

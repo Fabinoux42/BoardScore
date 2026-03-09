@@ -426,49 +426,64 @@ function renderYbCatList() {
     const current = curPlayer(state);
     const sheet = state.sheets[current.name];
 
-    // Construire la liste des catégories jouables selon les règles Joker :
-    // 1. La case de la section haute correspondant au dé
-    // 2. Toutes les cases de la section basse (sauf Yam's)
-    // 3. Chance
-    // Les cases déjà remplies sont affichées grisées
-
     const jokerCats = [];
 
     // Section haute correspondante
     const upperCat = CATEGORIES.find(c => c.type === 'dice' && c.face === ybDieFace);
     if (upperCat) {
-        const val = ybDieFace * 5; // max possible (5 dés identiques)
-        jokerCats.push({ cat: upperCat, value: val, label: upperCat.icon + ' ' + upperCat.name + ' → ' + val + ' pts' });
+        const val = ybDieFace * 5;
+        jokerCats.push({ cat: upperCat, value: val, icon: upperCat.icon, name: upperCat.name, pts: val });
     }
 
-    // Section basse (sauf Yam's lui-même)
-    const lowerCatsAvail = [
-        { id: 'threeK', value: ybDieFace * 5, label: '3X Brelan → ' + (ybDieFace * 5) + ' pts' },
-        { id: 'fourK',  value: ybDieFace * 5, label: '4X Carré → ' + (ybDieFace * 5) + ' pts' },
-        { id: 'full',   value: 25, label: 'FH Full → 25 pts' },
-        { id: 'smStr',  value: 30, label: 'S Pte suite → 30 pts' },
-        { id: 'lgStr',  value: 40, label: 'L Gde suite → 40 pts' },
-        { id: 'chance', value: ybDieFace * 5, label: 'CH Chance → ' + (ybDieFace * 5) + ' pts' },
+    // Section basse (sauf Yam's)
+    const lowerItems = [
+        { id: 'threeK', icon: '3X', name: 'Brelan',    pts: ybDieFace * 5 },
+        { id: 'fourK',  icon: '4X', name: 'Carré',     pts: ybDieFace * 5 },
+        { id: 'full',   icon: 'FH', name: 'Full',      pts: 25 },
+        { id: 'smStr',  icon: 'S',  name: 'Pte suite', pts: 30 },
+        { id: 'lgStr',  icon: 'L',  name: 'Gde suite', pts: 40 },
+        { id: 'chance', icon: 'CH', name: 'Chance',    pts: ybDieFace * 5 },
     ];
-    lowerCatsAvail.forEach(lc => {
-        const cat = CATEGORIES.find(c => c.id === lc.id);
-        if (cat) jokerCats.push({ cat, value: lc.value, label: lc.label });
+    lowerItems.forEach(li => {
+        const cat = CATEGORIES.find(c => c.id === li.id);
+        if (cat) jokerCats.push({ cat, value: li.pts, icon: li.icon, name: li.name, pts: li.pts });
     });
+
+    // Vérifier s'il reste au moins une catégorie ouverte
+    const hasOpen = jokerCats.some(jc => sheet[jc.cat.id] === null);
 
     let html = '';
     jokerCats.forEach(jc => {
         const done = sheet[jc.cat.id] !== null;
         const selected = ybCatId === jc.cat.id;
+        const label = '<span class="yb-icon">' + jc.icon + '</span> ' + jc.name + ' → ' + jc.pts + ' pts';
+
         if (done) {
             html += '<div class="yb-cat-row done">' +
-                '<span class="yb-cat-label">' + jc.label + '</span>' +
+                '<span class="yb-cat-label">' + label + '</span>' +
                 '<span class="sh-done-val">' + sheet[jc.cat.id] + '</span></div>';
         } else {
             html += '<div class="yb-cat-row ' + (selected ? 'selected' : '') + '" onclick="selectYbCat(\'' + jc.cat.id + '\',' + jc.value + ')">' +
-                '<span class="yb-cat-label">' + jc.label + '</span>' +
+                '<span class="yb-cat-label">' + label + '</span>' +
                 (selected ? '<span class="yb-cat-check">✓</span>' : '') + '</div>';
         }
     });
+
+    // Si tout est pris → option sacrifice (0 dans n'importe quelle catégorie encore ouverte globalement)
+    if (!hasOpen) {
+        html += '<div class="yb-sacrifice-notice">Toutes les catégories liées sont prises.</div>';
+        // Trouver les catégories encore ouvertes (toutes sections confondues)
+        const openCats = CATEGORIES.filter(c => c.id !== 'yams' && sheet[c.id] === null);
+        if (openCats.length > 0) {
+            html += '<div class="newgame-section-title" style="margin-top:12px">Sacrifier (0 pts)</div>';
+            openCats.forEach(c => {
+                const selected = ybCatId === c.id;
+                html += '<div class="yb-cat-row sacrifice ' + (selected ? 'selected' : '') + '" onclick="selectYbCat(\'' + c.id + '\',0)">' +
+                    '<span class="yb-cat-label"><span class="yb-icon">' + c.icon + '</span> ' + c.name + ' → 0 pts</span>' +
+                    (selected ? '<span class="yb-cat-check">✓</span>' : '') + '</div>';
+            });
+        }
+    }
 
     BoardScore.$('ybCatList').innerHTML = html;
 }
