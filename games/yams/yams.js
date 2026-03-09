@@ -293,13 +293,24 @@ function renderSheet() {
 
         } else if (cat.type === 'ofkind') {
             // Brelan / Carré : sélecteur du dé 1-6
+            const extraCount = 5 - cat.mult;
+            const selectedDie = isPend && pending.ofkindDie ? pending.ofkindDie : null;
+
+            // Calcul du résultat partiel (même si pas tout rempli)
+            let partialResult = '';
+            if (isPend && selectedDie) {
+                let sum = selectedDie * cat.mult;
+                if (pending.extraDice) pending.extraDice.forEach(v => { if (v) sum += v; });
+                partialResult = '= ' + sum;
+            }
+
             inp = '<div class="sh-dice-sel">';
             for (let d = 1; d <= 6; d++) {
-                const active = isPend && (pending.value === d * cat.mult);
+                const active = selectedDie === d;
                 inp += '<button class="sh-dice-btn ' + (active ? 'on' : '') + '" ' +
                     'onclick="selectOfKind(\'' + cat.id + '\',' + cat.mult + ',' + d + ')">' + d + '</button>';
             }
-            inp += '<span class="sh-dice-result">' + (isPend ? '= ' + pending.value : '') + '</span></div>';
+            inp += '<span class="sh-dice-result">' + partialResult + '</span></div>';
 
         } else if (cat.type === 'check') {
             // Full, suites, Yam's : toggle check
@@ -321,6 +332,25 @@ function renderSheet() {
                 '</div>';
         }
 
+        // Extras pour Brelan/Carré (ligne séparée sous les boutons, dans sh-row)
+        let ofkindExtras = '';
+        if (cat.type === 'ofkind' && isPend && pending.ofkindDie) {
+            const xCount = 5 - cat.mult;
+            const xDie = pending.ofkindDie;
+            const resultText = pending.value ? '= ' + pending.value : '';
+
+            ofkindExtras = '<div class="sh-extra-dice">';
+            ofkindExtras += '<span class="sh-extra-label">' + cat.mult + '×' + xDie + '</span>';
+            ofkindExtras += '<span class="sh-extra-plus">+</span>';
+            for (let e = 0; e < xCount; e++) {
+                const ev = pending.extraDice ? pending.extraDice[e] || '' : '';
+                ofkindExtras += '<input type="number" class="sh-extra-inp" id="sh_extra_' + cat.id + '_' + e + '" ' +
+                    'value="' + ev + '" min="1" max="6" placeholder="?" ' +
+                    'oninput="updateOfKindExtra(\'' + cat.id + '\',' + cat.mult + ',' + xDie + ',' + xCount + ')" />';
+            }
+            ofkindExtras += '</div>';
+        }
+
         // Build chance dice detail HTML (will go after sh-inp-area, inside sh-row)
         let chanceDice = '';
         if (cat.type === 'chance' && isPend && pending.chanceDetail) {
@@ -338,6 +368,7 @@ function renderSheet() {
             '<span class="sh-icon">' + cat.icon + '</span>' +
             '<span class="sh-name">' + cat.name + '</span>' +
             '<div class="sh-inp-area">' + inp + '</div>' +
+            (ofkindExtras || '') +
             chanceDice +
             '</div>';
     }
@@ -372,10 +403,43 @@ function selectDice(catId, face, count) {
     renderSheet();
 }
 
-/* Brelan / Carré */
+/* Brelan / Carré — sélection du dé principal */
 function selectOfKind(catId, mult, dieFace) {
-    game.getState().turnPending = { catId, value: dieFace * mult };
+    const extraCount = 5 - mult;
+    game.getState().turnPending = {
+        catId,
+        ofkindDie: dieFace,
+        extraDice: new Array(extraCount).fill(null),
+        value: null, // pas encore complet
+    };
     renderSheet();
+}
+
+/* Brelan / Carré — mise à jour des dés restants */
+function updateOfKindExtra(catId, mult, dieFace, extraCount) {
+    const p = game.getState().turnPending;
+    if (!p.extraDice) p.extraDice = new Array(extraCount).fill(null);
+
+    let extraTotal = 0;
+    let allFilled = true;
+    let partialSum = dieFace * mult;
+
+    for (let e = 0; e < extraCount; e++) {
+        const inp = BoardScore.$('sh_extra_' + catId + '_' + e);
+        let v = parseInt(inp ? inp.value : '') || 0;
+        if (v > 6) { v = 6; if (inp) inp.value = v; }
+        if (v < 1 && inp && inp.value !== '') { v = 1; inp.value = v; }
+        p.extraDice[e] = (inp && inp.value !== '') ? v : null;
+        if (p.extraDice[e] === null) allFilled = false;
+        else { extraTotal += v; }
+        partialSum += (p.extraDice[e] || 0);
+    }
+
+    p.value = allFilled ? (dieFace * mult + extraTotal) : null;
+
+    // Mettre à jour le résultat affiché (partiel ou complet)
+    const resultSpan = document.querySelector('.sh-row.pend .sh-dice-result');
+    if (resultSpan) resultSpan.textContent = '= ' + partialSum;
 }
 
 /* Full, suites, Yam's */
@@ -672,7 +736,12 @@ function confirmTurn() {
 
     // Vérif : valeur entrée (sauf en mode sacrifice)
     if (!sacrificeMode && (p.value === undefined || p.value === null)) {
-        showTurnError('⚠️ Entre un score ou utilise Sacrifier !');
+        // Message spécifique pour brelan/carré incomplet
+        if (p.ofkindDie && p.extraDice) {
+            showTurnError('⚠️ Renseigne tous les dés restants !');
+        } else {
+            showTurnError('⚠️ Entre un score ou utilise Sacrifier !');
+        }
         return;
     }
 
