@@ -265,11 +265,14 @@ function renderScoreInputs() {
         const locked = isWinner || isNoPose || isRamiSecLoser;
         let rowTag = '';
         if (isWinner) rowTag = '<div class="row-tag winner-tag">🏆 Gagnant −10</div>';
-        else if (isRamiSecLoser) rowTag = '<div class="row-tag ramiSec-tag">⚡</div>';
+        else if (isRamiSecLoser) rowTag = '';
         else if (isNoPose) rowTag = '<div class="row-tag noPose-tag">🚫 Sans pose</div>';
+
+        const secBadge = isRamiSecLoser ? '<span class="ramisec-badge">⚡</span>' : '';
 
         return '<div class="score-row ' + (isWinner ? 'is-winner' : '') + (isNoPose ? ' is-noPose' : '') + (locked ? ' locked' : '') + '" id="srow_' + i + '">' +
             rowTag +
+            secBadge +
             '<div class="avatar-sm" style="background:' + p.color + '">' + BoardScore.getInitial(p.name) + '</div>' +
             '<div class="row-info"><div class="name">' + p.name + '</div><div class="current">Total : ' + p.score + '</div></div>' +
             '<div class="score-input-wrap">' +

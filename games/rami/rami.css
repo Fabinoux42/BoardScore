@@ -34,6 +34,13 @@ input[type="number"]:focus { border-color: var(--accent2); }
 /* ── SCORE ROW : winner lock ── */
 .score-row.is-winner .score-input-wrap { opacity: 0.3; pointer-events: none; }
 
+/* ── RAMI SEC : inline badge à gauche de l'avatar ── */
+.ramisec-badge {
+    font-size: 0.85rem;
+    margin-right: -4px;
+    flex-shrink: 0;
+}
+
 /* ── DEALER BAR ── */
 .dealer-bar {
     background: rgba(224, 92, 42, 0.08);
