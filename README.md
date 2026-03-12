@@ -1,5 +1,7 @@
 - Système de statistiques par joueur - **FAIT**
-- Stats générale - **FAIT**
+- Stats générale - **90%**
+  - On voit pas le changement de mois
+  - Ajouter la ligne courbée du temps passé sur l'appli par jours en plus du temps moyen, abscisse de droite aussi mais d'une autre couleur
 - Classement global - **FAIT**
 - Informations sur l'application depuis le menu - **FAIT**
 - Récap de soirée

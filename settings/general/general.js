@@ -796,28 +796,47 @@ function drawTimelineChart(matches) {
         const dayNum = d.date.getDate();
         const dayOfWeek = d.date.getDay();
 
-        /* ── Marqueur année (ligne verticale dorée + label) ── */
-        if (yr !== lastYear) {
+        /* ── Marqueur année (ligne verticale dorée + label pill) ── */
+        const yearChanged = yr !== lastYear;
+        if (yearChanged) {
+            const lx = x - step / 2;
+            // Ligne pointillée
             ctx.strokeStyle = yearColor;
             ctx.lineWidth = 1.5;
             ctx.setLineDash([3, 3]);
-            ctx.beginPath(); ctx.moveTo(x - step / 2, PAD_T); ctx.lineTo(x - step / 2, PAD_T + chartH); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(lx, PAD_T); ctx.lineTo(lx, PAD_T + chartH); ctx.stroke();
             ctx.setLineDash([]);
-            ctx.fillStyle = yearColor;
+            // Pill de fond pour lisibilité
+            const yearStr = '' + yr;
             ctx.font = 'bold ' + LABEL_FONT_SIZE + 'px DM Sans,sans-serif';
+            const tw = ctx.measureText(yearStr).width;
+            const pillX = lx + 4, pillY = PAD_T + 3;
+            const pillW = tw + 8, pillH = LABEL_FONT_SIZE + 4;
+            ctx.fillStyle = isDark ? '#1a0a2e' : '#f5f0ff';
+            ctx.beginPath();
+            ctx.roundRect(pillX, pillY, pillW, pillH, 3);
+            ctx.fill();
+            ctx.fillStyle = yearColor;
             ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-            ctx.fillText(yr, x - step / 2 + 3, PAD_T + 2);
+            ctx.fillText(yearStr, pillX + 4, pillY + 2);
             lastYear = yr;
         }
 
-        /* ── Marqueur mois (pour intervals day/week) ── */
-        const showMonthMarker = mo !== lastMonth && CHART_BAR_INTERVAL !== 'month';
-        if (showMonthMarker && yr === lastYear) { // (l'année est déjà affichée si yr change)
+        /* ── Marqueur mois (pour intervals day/week, seulement si l'année n'a pas changé) ── */
+        const showMonthMarker = mo !== lastMonth && CHART_BAR_INTERVAL !== 'month' && !yearChanged;
+        if (showMonthMarker) {
+            const lx = x - step / 2;
+            // Ligne pointillée bleue
             ctx.strokeStyle = monthColor;
             ctx.lineWidth = 1;
             ctx.setLineDash([2, 4]);
-            ctx.beginPath(); ctx.moveTo(x - step / 2, PAD_T + 18); ctx.lineTo(x - step / 2, PAD_T + chartH); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(lx, PAD_T + 18); ctx.lineTo(lx, PAD_T + chartH); ctx.stroke();
             ctx.setLineDash([]);
+            // Mini label mois en haut de la ligne
+            ctx.fillStyle = monthColor;
+            ctx.font = Math.round(LABEL_FONT_SIZE * 0.85) + 'px DM Sans,sans-serif';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+            ctx.fillText(MONTH_NAMES_SHORT[mo], lx + 3, PAD_T + 18);
         }
 
         /* ── Label abscisse ── */

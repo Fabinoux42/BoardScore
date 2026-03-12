@@ -127,8 +127,6 @@ function renderWinnerPicker() {
     const list = BoardScore.$('winnerList');
     if (!list) return;
     list.innerHTML =
-        '<button class="finisher-btn none-btn ' + (state.tempWinner === null ? 'selected' : '') +
-        '" onclick="selectWinner(null)">Aucun / Passer</button>' +
         state.players.map(p =>
             '<button class="finisher-btn ' + (state.tempWinner === p.name ? 'selected' : '') +
             '" onclick="selectWinner(\'' + p.name + '\')">' +
