@@ -19,6 +19,7 @@
     <div class="logo">🎲</div>
     <div class="app-title">Board<span>Score</span></div>
     <div class="app-sub">Compteurs de points pour jeux de société</div>
+    <button class="info-btn" onclick="openInfoModal()" aria-label="Aide">ℹ️</button>
     <a href="settings/index.html" class="settings-btn" aria-label="Paramètres">⚙️</a>
     <div class="install-hint" id="installHint">
       💡 <strong>Installer :</strong> Chrome → menu ⋮ → <br>"Ajouter à l'écran d'accueil"
@@ -43,12 +44,136 @@
 
   <footer>
     Fait avec <span>♥</span> pour les soirées jeux
-    <button class="reset-btn" onclick="confirmReset()">🔄 Réinitialiser les données</button>
+    <button class="reset-btn" onclick="openResetModal()">🔄 Réinitialiser les données</button>
   </footer>
 </div>
 
 <!-- Theme toggle -->
 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Changer de thème">🌙</button>
+
+<!-- ══ MODALE INFO ══ -->
+<div class="modal-overlay" id="infoModal" onclick="closeInfoModal(event)">
+  <div class="info-modal">
+    <div class="info-modal-handle"></div>
+    <div class="info-modal-header">
+      <div class="info-modal-icon">🎲</div>
+      <div class="info-modal-title">BoardScore — Guide</div>
+    </div>
+
+    <div class="info-sections">
+
+      <div class="info-block">
+        <div class="info-block-title">⚙️ Paramètres</div>
+        <div class="info-item">
+          <span class="info-emoji">👥</span>
+          <div><strong>Joueurs enregistrés</strong> — Crée un roster de joueurs global. Leur nom et couleur sont proposés automatiquement dans chaque jeu. Tu peux modifier le nom ou la couleur à tout moment, c'est répercuté dans les parties en cours.</div>
+        </div>
+        <div class="info-item">
+          <span class="info-emoji">📊</span>
+          <div><strong>Statistiques</strong> — Consulte le nombre de parties jouées, victoires et taux de réussite par joueur, avec le détail par jeu.</div>
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-block-title">🎮 Dans chaque jeu</div>
+        <div class="info-item">
+          <span class="info-emoji">➕</span>
+          <div><strong>Ajouter un joueur</strong> — Tape un nom pour l'ajouter. Les joueurs du roster sont suggérés automatiquement. La couleur est attribuée ou reprise depuis le roster.</div>
+        </div>
+        <div class="info-item">
+          <span class="info-emoji">✏️</span>
+          <div><strong>Saisir les scores</strong> — Ouvre la modale de saisie de la manche en cours. Tu peux corriger un score déjà saisi en ré-ouvrant la modale.</div>
+        </div>
+        <div class="info-item">
+          <span class="info-emoji">▶️</span>
+          <div><strong>Manche suivante</strong> — Passe à la manche d'après. L'historique des manches est conservé en bas de page.</div>
+        </div>
+        <div class="info-item">
+          <span class="info-emoji">↺</span>
+          <div><strong>Rejouer</strong> — Lance une nouvelle partie. Tu peux garder les mêmes joueurs (remise à zéro des scores) ou repartir avec de nouveaux joueurs. La partie terminée est sauvegardée dans les statistiques.</div>
+        </div>
+        <div class="info-item">
+          <span class="info-emoji">🏆</span>
+          <div><strong>Écran de victoire</strong> — S'affiche automatiquement quand la condition de fin est atteinte. Affiche le podium et propose de relancer une partie.</div>
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-block-title">💾 Sauvegarde</div>
+        <div class="info-item">
+          <span class="info-emoji">🔒</span>
+          <div><strong>Sauvegarde automatique</strong> — Chaque action est sauvegardée instantanément sur ton appareil. Tu peux fermer l'app et reprendre là où tu en étais.</div>
+        </div>
+        <div class="info-item">
+          <span class="info-emoji">📱</span>
+          <div><strong>Installation</strong> — Sur Chrome, clique sur ⋮ → "Ajouter à l'écran d'accueil" pour utiliser BoardScore comme une vraie app, sans navigateur.</div>
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-block-title">🌙 Thème & affichage</div>
+        <div class="info-item">
+          <span class="info-emoji">🌙</span>
+          <div><strong>Mode sombre / clair</strong> — Le bouton en bas à droite bascule entre les deux thèmes. Le choix est mémorisé.</div>
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-block-title">🔄 Réinitialisation</div>
+        <div class="info-item">
+          <span class="info-emoji">🎮</span>
+          <div><strong>Données de jeu</strong> — Efface les parties en cours et l'historique des victoires, sans toucher à tes joueurs enregistrés.</div>
+        </div>
+        <div class="info-item">
+          <span class="info-emoji">👥</span>
+          <div><strong>Joueurs</strong> — Supprime le roster de joueurs, sans effacer les parties.</div>
+        </div>
+        <div class="info-item">
+          <span class="info-emoji">💥</span>
+          <div><strong>Tout réinitialiser</strong> — Remet l'app à zéro complètement.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <button class="info-modal-close" onclick="document.getElementById('infoModal').classList.remove('open')">Fermer</button>
+  </div>
+</div>
+
+<!-- ══ MODALE RESET ══ -->
+<div class="modal-overlay" id="resetModal" onclick="closeResetModal(event)">
+  <div class="reset-modal">
+    <div class="info-modal-handle"></div>
+    <div class="reset-modal-title">🔄 Réinitialiser</div>
+    <div class="reset-modal-sub">Choisis ce que tu veux effacer</div>
+
+    <div class="reset-options">
+      <button class="reset-option-btn" id="resetGames" onclick="doReset('games')">
+        <span class="ro-icon">🎮</span>
+        <div class="ro-text">
+          <div class="ro-title">Données de jeu</div>
+          <div class="ro-sub">Parties en cours + historique des victoires<br><em>Les joueurs enregistrés sont conservés</em></div>
+        </div>
+      </button>
+      <button class="reset-option-btn" id="resetPlayers" onclick="doReset('players')">
+        <span class="ro-icon">👥</span>
+        <div class="ro-text">
+          <div class="ro-title">Joueurs enregistrés</div>
+          <div class="ro-sub">Supprime le roster de joueurs<br><em>Les parties en cours sont conservées</em></div>
+        </div>
+      </button>
+      <button class="reset-option-btn danger" id="resetAll" onclick="doReset('all')">
+        <span class="ro-icon">💥</span>
+        <div class="ro-text">
+          <div class="ro-title">Tout réinitialiser</div>
+          <div class="ro-sub">Efface absolument toutes les données</div>
+        </div>
+      </button>
+    </div>
+
+    <button class="reset-modal-cancel" onclick="document.getElementById('resetModal').classList.remove('open')">Annuler</button>
+  </div>
+</div>
 
 <script src="menu.js"></script>
 </body>
