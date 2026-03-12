@@ -191,49 +191,139 @@ setTimeout(() => {
 }, 8000);
 
 
-/* ── RESET DATA ── */
-function confirmReset() {
-    const btn = document.querySelector('.reset-btn');
+/* ── INFO MODAL ── */
+function openInfoModal() {
+    document.getElementById('infoModal').classList.add('open');
+}
+function closeInfoModal(e) {
+    if (e.target === document.getElementById('infoModal')) {
+        document.getElementById('infoModal').classList.remove('open');
+    }
+}
+
+
+/* ── RESET MODAL ── */
+function openResetModal() {
+    // Remettre tous les boutons à leur état initial
+    ['resetGames', 'resetPlayers', 'resetAll'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.dataset.confirm = '';
+            btn.classList.remove('confirming', 'done');
+            // Restaurer le contenu original
+            renderResetBtn(id);
+        }
+    });
+    document.getElementById('resetModal').classList.add('open');
+}
+function closeResetModal(e) {
+    if (e.target === document.getElementById('resetModal')) {
+        document.getElementById('resetModal').classList.remove('open');
+    }
+}
+
+const RESET_BTN_CONTENT = {
+    games: {
+        icon: '🎮',
+        title: 'Données de jeu',
+        sub: 'Parties en cours + historique des victoires<br><em>Les joueurs enregistrés sont conservés</em>',
+        confirmTitle: '⚠️ Confirmer ?',
+        confirmSub: 'Les parties et statistiques seront effacées'
+    },
+    players: {
+        icon: '👥',
+        title: 'Joueurs enregistrés',
+        sub: 'Supprime le roster de joueurs<br><em>Les parties en cours sont conservées</em>',
+        confirmTitle: '⚠️ Confirmer ?',
+        confirmSub: 'Tous tes joueurs enregistrés seront supprimés'
+    },
+    all: {
+        icon: '💥',
+        title: 'Tout réinitialiser',
+        sub: 'Efface absolument toutes les données',
+        confirmTitle: '⚠️ Confirmer ?',
+        confirmSub: 'Toutes les données seront définitivement effacées'
+    }
+};
+
+function renderResetBtn(type) {
+    const btn = document.getElementById('reset' + type.charAt(0).toUpperCase() + type.slice(1));
+    if (!btn) return;
+    const c = RESET_BTN_CONTENT[type];
+    btn.innerHTML =
+        '<span class="ro-icon">' + c.icon + '</span>' +
+        '<div class="ro-text">' +
+        '<div class="ro-title">' + c.title + '</div>' +
+        '<div class="ro-sub">' + c.sub + '</div>' +
+        '</div>';
+}
+
+let resetTimers = {};
+
+function doReset(type) {
+    const idMap = { games: 'resetGames', players: 'resetPlayers', all: 'resetAll' };
+    const btn = document.getElementById(idMap[type]);
     if (!btn) return;
 
-    // Premier clic → demande de confirmation
+    // Premier clic → demande confirmation
     if (!btn.dataset.confirm) {
         btn.dataset.confirm = '1';
-        btn.textContent = '⚠️ Confirmer la suppression ?';
-        btn.classList.add('confirm');
-        // Auto-annuler après 4 secondes
-        setTimeout(() => {
+        btn.classList.add('confirming');
+        const c = RESET_BTN_CONTENT[type];
+        btn.innerHTML =
+            '<span class="ro-icon">⚠️</span>' +
+            '<div class="ro-text">' +
+            '<div class="ro-title">' + c.confirmTitle + '</div>' +
+            '<div class="ro-sub">' + c.confirmSub + '</div>' +
+            '</div>';
+
+        // Auto-annuler après 4s
+        clearTimeout(resetTimers[type]);
+        resetTimers[type] = setTimeout(() => {
             if (btn.dataset.confirm) {
-                delete btn.dataset.confirm;
-                btn.textContent = '🔄 Réinitialiser les données';
-                btn.classList.remove('confirm');
+                btn.dataset.confirm = '';
+                btn.classList.remove('confirming');
+                renderResetBtn(type);
             }
         }, 4000);
         return;
     }
 
-    // Deuxième clic → suppression
-    const keys = [];
+    // Deuxième clic → suppression effective
+    clearTimeout(resetTimers[type]);
+
+    const GAME_KEYS = ['mxt_', 'skyjo_', 'rami_', 'uno_', 'yams_'];
+    const PLAYER_KEYS = ['boardscore_players'];
+    const MATCH_KEYS = ['boardscore_matches'];
+    const OTHER_KEYS = ['boardscore_theme'];
+
+    const toDelete = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (
-            key.startsWith('mxt_') ||
-            key.startsWith('skyjo_') ||
-            key.startsWith('rami_') ||
-            key.startsWith('uno_') ||
-            key.startsWith('yams_') ||
-            key === 'boardscore_theme' ||
-            key === 'boardscore_players' ||
-            key === 'boardscore_matches'
-        )) {
-            keys.push(key);
-        }
+        if (!key) continue;
+        const isGame = GAME_KEYS.some(p => key.startsWith(p)) || MATCH_KEYS.includes(key);
+        const isPlayer = PLAYER_KEYS.includes(key);
+        const isOther = OTHER_KEYS.includes(key);
+
+        if (type === 'all' && (isGame || isPlayer || isOther)) toDelete.push(key);
+        else if (type === 'games' && (isGame)) toDelete.push(key);
+        else if (type === 'players' && (isPlayer)) toDelete.push(key);
     }
-    keys.forEach(k => localStorage.removeItem(k));
 
-    btn.textContent = '✅ Données supprimées !';
-    btn.classList.remove('confirm');
+    toDelete.forEach(k => localStorage.removeItem(k));
+
+    btn.dataset.confirm = '';
+    btn.classList.remove('confirming');
     btn.classList.add('done');
+    btn.innerHTML =
+        '<span class="ro-icon">✅</span>' +
+        '<div class="ro-text">' +
+        '<div class="ro-title">Supprimé !</div>' +
+        '<div class="ro-sub">Les données ont bien été effacées</div>' +
+        '</div>';
 
-    setTimeout(() => location.reload(), 800);
+    setTimeout(() => {
+        document.getElementById('resetModal').classList.remove('open');
+        location.reload();
+    }, 900);
 }
