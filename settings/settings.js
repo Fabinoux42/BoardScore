@@ -245,14 +245,20 @@ function renderStats() {
                 const player = state.players.find(pl => pl.name === p.name);
                 if (!player) return;
 
+                // Ne compter que si au moins une manche a été jouée
+                if (!state.history || state.history.length === 0) return;
+
                 // Ce joueur est dans cette partie
                 stats.games++;
                 stats.totalScore += player.score;
 
-                // Déterminer si le joueur a gagné
+                // Déterminer si le joueur a gagné (seulement si des scores > 0 existent)
                 const scores = state.players.map(pl => pl.score);
-                const winScore = gc.lowestWins ? Math.min(...scores) : Math.max(...scores);
-                if (player.score === winScore) stats.wins++;
+                const hasRealScores = scores.some(s => s !== 0);
+                if (hasRealScores) {
+                    const winScore = gc.lowestWins ? Math.min(...scores) : Math.max(...scores);
+                    if (player.score === winScore) stats.wins++;
+                }
 
                 // Meilleur score
                 if (!stats.bestGame || (gc.lowestWins ? player.score < stats.bestGame.score : player.score > stats.bestGame.score)) {

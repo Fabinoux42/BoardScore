@@ -410,17 +410,47 @@ const BoardScore = (() => {
         function renderNgNewList() {
             const list = $('ngNewList');
             if (!list) return;
+
+            let html = '';
+
+            // Roster quick-pick : joueurs enregistrés pas encore ajoutés
+            try {
+                const roster = JSON.parse(localStorage.getItem('boardscore_players')) || [];
+                const available = roster.filter(r => !ngNewPlayers.find(n => n.toLowerCase() === r.name.toLowerCase()));
+                if (available.length > 0) {
+                    html += '<div class="ng-roster-pick">';
+                    html += '<div class="ng-roster-label">Joueurs enregistrés</div>';
+                    html += '<div class="ng-roster-chips">';
+                    available.forEach(r => {
+                        html += '<button class="ng-roster-chip" onclick="game.ngAddFromRoster(\'' + r.name.replace(/'/g, "\\'") + '\')">' +
+                            '<span class="ng-chip-dot" style="background:' + r.color + '"></span>' + r.name +
+                            '</button>';
+                    });
+                    html += '</div></div>';
+                }
+            } catch (e) {}
+
+            // Liste des joueurs ajoutés
             if (ngNewPlayers.length === 0) {
-                list.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:4px 0 8px">Aucun joueur ajouté.</div>';
-                return;
+                html += '<div style="color:var(--muted);font-size:0.82rem;padding:4px 0 8px">Aucun joueur ajouté.</div>';
+            } else {
+                html += ngNewPlayers.map((p, i) =>
+                    '<div class="new-player-row">' +
+                    '<div class="np-avatar" style="background:' + COLORS[i % COLORS.length] + '">' + getInitial(p) + '</div>' +
+                    '<div class="np-name">' + p + '</div>' +
+                    '<div class="np-remove" onclick="game.ngRemovePlayer(' + i + ')">✕</div>' +
+                    '</div>'
+                ).join('');
             }
-            list.innerHTML = ngNewPlayers.map((p, i) =>
-                '<div class="new-player-row">' +
-                '<div class="np-avatar" style="background:' + COLORS[i % COLORS.length] + '">' + getInitial(p) + '</div>' +
-                '<div class="np-name">' + p + '</div>' +
-                '<div class="np-remove" onclick="game.ngRemovePlayer(' + i + ')">✕</div>' +
-                '</div>'
-            ).join('');
+
+            list.innerHTML = html;
+        }
+
+        function ngAddFromRoster(name) {
+            if (ngNewPlayers.find(n => n.toLowerCase() === name.toLowerCase())) return;
+            ngNewPlayers.push(name);
+            renderNgNewList();
+            if (config.onNgPlayersChanged) config.onNgPlayersChanged(ngNewPlayers);
         }
 
         function ngAddPlayer() {
@@ -562,6 +592,7 @@ const BoardScore = (() => {
             selectPlayerMode,
             toggleKeepPlayer,
             ngAddPlayer,
+            ngAddFromRoster,
             ngRemovePlayer,
             confirmNewGame,
             getNgMode()       { return ngMode; },
