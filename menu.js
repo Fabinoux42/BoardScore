@@ -228,14 +228,14 @@ const RESET_BTN_CONTENT = {
         title: 'Données de jeu',
         sub: 'Parties en cours + historique des victoires<br><em>Les joueurs enregistrés sont conservés</em>',
         confirmTitle: '⚠️ Confirmer ?',
-        confirmSub: 'Les parties et statistiques seront effacées'
+        confirmSub: 'Les parties et les statistiques des parties seront effacées'
     },
     players: {
         icon: '👥',
         title: 'Joueurs enregistrés',
-        sub: 'Supprime le roster de joueurs<br><em>Les parties en cours sont conservées</em>',
+        sub: 'Supprime les joueurs enregistrés et leurs statistiques<br><em>Les parties en cours sont conservées</em>',
         confirmTitle: '⚠️ Confirmer ?',
-        confirmSub: 'Tous tes joueurs enregistrés seront supprimés'
+        confirmSub: 'Tous tes joueurs enregistrés et statistiques seront supprimés'
     },
     all: {
         icon: '💥',
