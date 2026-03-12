@@ -1,0 +1,38 @@
+/* ═══════════════════════════════════════════
+   general.css — Styles spécifiques Stats générales
+   ═══════════════════════════════════════════ */
+
+/* ── Close button (pas de core.js ici) ── */
+.modal-close-btn {
+    position: absolute;
+    top: 14px; left: 14px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    color: var(--muted);
+    font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    z-index: 5;
+    padding: 0;
+    line-height: 1;
+}
+.modal-close-btn:active { transform: scale(0.9); background: var(--glass-hover); }
+.modal-overlay .modal { position: relative; }
+
+/* ── Top3 charts in modal ── */
+.top3-game-block {
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+}
+.top3-game-block:last-child { border-bottom: none; margin-bottom: 0; }
+
+.top3-game-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem; font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+}

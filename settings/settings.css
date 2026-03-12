@@ -400,3 +400,34 @@ header {
     color: var(--muted); font-size: 0.75rem;
     font-weight: 600;
 }
+
+
+/* ── Lien navigation vers Stats générales ── */
+.stats-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+.stats-nav-link:active { transform: scale(0.98); border-color: var(--accent); }
+.stats-nav-icon { font-size: 1.6rem; flex-shrink: 0; }
+.stats-nav-text { flex: 1; min-width: 0; }
+.stats-nav-title {
+    font-weight: 700; font-size: 1rem;
+    color: var(--text);
+    font-family: 'Playfair Display', serif;
+}
+.stats-nav-sub {
+    font-size: 0.75rem; color: var(--muted);
+    margin-top: 2px;
+}
+.stats-nav-arrow {
+    font-size: 1.2rem; color: var(--muted);
+    transition: transform 0.15s;
+}
+.stats-nav-link:active .stats-nav-arrow { transform: translateX(4px); }
