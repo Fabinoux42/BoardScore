@@ -494,6 +494,33 @@ input[type="number"]:disabled { opacity: 0.4; }
 .new-player-row .np-name  { flex: 1; font-size: 0.88rem; font-weight: 500; }
 .new-player-row .np-remove { color: var(--red); font-size: 0.85rem; cursor: pointer; padding: 4px; }
 
+/* ── Roster quick-pick (dans modale new game) ── */
+.ng-roster-pick { margin-bottom: 12px; }
+.ng-roster-label {
+    font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--muted); margin-bottom: 6px;
+}
+.ng-roster-chips {
+    display: flex; flex-wrap: wrap; gap: 6px;
+}
+.ng-roster-chip {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--glass-subtle);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+}
+.ng-roster-chip:active { transform: scale(0.95); }
+.ng-roster-chip:hover { border-color: var(--game-accent); }
+.ng-chip-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%; flex-shrink: 0;
+}
+
 .add-newplayer-form { display: flex; gap: 8px; }
 .add-newplayer-form input { flex: 1; }
 

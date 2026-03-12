@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#0d0820" />
+    <title>⚙️ Paramètres — BoardScore</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+<div id="app">
+
+    <header>
+        <div class="header-left">
+            <a href="../index.html" class="btn-back">←</a>
+            <div>
+                <div class="header-title">⚙️ <span>Paramètres</span></div>
+                <div class="header-sub">Joueurs & statistiques</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Section : Joueurs du roster -->
+    <div class="section">
+        <div class="section-title">👥 Joueurs enregistrés</div>
+        <div class="section-sub">Ces joueurs sont disponibles dans tous les jeux</div>
+        <div id="rosterList" class="roster-list"></div>
+        <div class="add-player-form">
+            <input type="text" id="newRosterName" placeholder="Nom du joueur…" maxlength="20" />
+            <button class="btn-add" onclick="addRosterPlayer()">+ Ajouter</button>
+        </div>
+    </div>
+
+    <!-- Section : Statistiques -->
+    <div class="section" id="statsSection">
+        <div class="section-title">📊 Statistiques</div>
+        <div class="section-sub">Résumé de toutes les parties jouées</div>
+        <div id="statsList" class="stats-list"></div>
+    </div>
+
+    <div class="section info-section">
+        <div class="section-title">ℹ️ À propos</div>
+        <div class="about-text">
+            <strong>BoardScore</strong> est une app de comptage de points pour vos soirées jeux.
+            Les joueurs enregistrés ici sont automatiquement proposés quand vous créez une nouvelle partie.
+            Tout joueur ajouté dans un jeu est aussi ajouté ici automatiquement.
+        </div>
+    </div>
+
+</div>
+
+<!-- Edit player modal -->
+<div class="modal-overlay" id="editModal" onclick="closeEditModal(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">✏️ Modifier le joueur</div>
+        <div class="modal-sub">Change le nom ou la couleur</div>
+        <input type="text" id="editName" class="edit-input" placeholder="Nom…" maxlength="20" />
+        <div class="color-picker" id="editColors"></div>
+        <button class="modal-confirm" onclick="saveEditPlayer()">✅ Enregistrer</button>
+        <button class="edit-delete" onclick="deleteEditPlayer()">🗑️ Supprimer ce joueur</button>
+    </div>
+</div>
+
+<!-- Detail stats modal -->
+<div class="modal-overlay" id="detailModal" onclick="closeDetailModal(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">📊 Détails — <span id="detailPlayerName"></span></div>
+        <div class="modal-sub">Stats détaillées par jeu</div>
+        <div id="detailContent"></div>
+    </div>
+</div>
+
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Changer de thème">🌙</button>
+
+<script src="settings.js"></script>
+</body>
+</html>

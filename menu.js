@@ -222,7 +222,9 @@ function confirmReset() {
             key.startsWith('rami_') ||
             key.startsWith('uno_') ||
             key.startsWith('yams_') ||
-            key === 'boardscore_theme'
+            key === 'boardscore_theme' ||
+            key === 'boardscore_players' ||
+            key === 'boardscore_matches'
         )) {
             keys.push(key);
         }

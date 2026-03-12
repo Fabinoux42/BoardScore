@@ -16,6 +16,7 @@ const game = BoardScore.create({
         round: 1,
         history: [],
         tempScores: {},
+        tempWinner: null,
         dominoMax: 12
     },
 
@@ -36,15 +37,18 @@ const game = BoardScore.create({
         renderDominoSet(state);
     },
 
-    /* ── History : scores avec + devant ── */
+    /* ── History : scores avec + devant, trophée pour le gagnant ── */
     buildHistoryItem(h) {
         const header = '<div class="history-item-header">' +
             '<span class="history-round-num">Manche ' + h.round + '</span></div>';
         const scores = '<div class="history-scores">' +
-            Object.entries(h.scores).map(([name, pts]) =>
-                '<span class="h-score"><strong>' + name + '</strong>: ' +
-                '<span class="val">+' + pts + '</span></span>'
-            ).join('') + '</div>';
+            Object.entries(h.scores).map(([name, pts]) => {
+                const isWinner = h.winner === name;
+                const prefix = pts === 0 ? '' : '+';
+                return '<span class="h-score"><strong>' + name + '</strong>: ' +
+                    '<span class="val">' + prefix + pts + '</span>' +
+                    (isWinner ? ' 🏆' : '') + '</span>';
+            }).join('') + '</div>';
         return '<div class="history-item">' + header + scores + '</div>';
     },
 
@@ -106,28 +110,64 @@ function openScoreModal() {
     if (state.players.length === 0) { alert('Ajoute au moins un joueur !'); return; }
 
     const existing = state.history.find(h => h.round === state.round);
+    state.tempWinner = existing ? (existing.winner || null) : null;
     state.tempScores = {};
     state.players.forEach(p => {
         state.tempScores[p.name] = existing ? (existing.scores[p.name] || 0) : 0;
     });
 
     BoardScore.$('modalSub').textContent = 'Manche ' + state.round + ' — points de chaque joueur';
+    renderWinnerPicker();
+    renderScoreInputs();
+    BoardScore.$('scoreModal').classList.add('open');
+}
+
+function renderWinnerPicker() {
+    const state = game.getState();
+    const list = BoardScore.$('winnerList');
+    if (!list) return;
+    list.innerHTML =
+        '<button class="finisher-btn none-btn ' + (state.tempWinner === null ? 'selected' : '') +
+        '" onclick="selectWinner(null)">Aucun / Passer</button>' +
+        state.players.map(p =>
+            '<button class="finisher-btn ' + (state.tempWinner === p.name ? 'selected' : '') +
+            '" onclick="selectWinner(\'' + p.name + '\')">' +
+            '<span class="fb-dot" style="background:' + p.color + '"></span>' + p.name + '</button>'
+        ).join('');
+}
+
+function selectWinner(name) {
+    const state = game.getState();
+    state.tempWinner = name;
+    // Le gagnant a 0 points, on met à jour tempScores
+    if (name) state.tempScores[name] = 0;
+    renderWinnerPicker();
+    renderScoreInputs();
+}
+
+function renderScoreInputs() {
+    const state = game.getState();
     BoardScore.$('scoreInputs').innerHTML = state.players.map((p, i) => {
-        const val = state.tempScores[p.name];
-        return '<div class="score-row">' +
+        const isWinner = state.tempWinner === p.name;
+        const val = isWinner ? 0 : (state.tempScores[p.name] || 0);
+        const locked = isWinner;
+        const rowTag = isWinner ? '<div class="row-tag winner-tag">🏆 Gagnant — 0 pt</div>' : '';
+        return '<div class="score-row ' + (isWinner ? 'is-winner locked' : '') + '" id="srow_' + i + '">' +
+            rowTag +
             '<div class="avatar-sm" style="background:' + p.color + '">' + BoardScore.getInitial(p.name) + '</div>' +
             '<div class="row-info"><div class="name">' + p.name + '</div>' +
             '<div class="current">Total actuel : ' + p.score + '</div></div>' +
             '<div class="score-input-wrap">' +
-            '<div class="score-stepper" onclick="stepScore(\'' + p.name + '\',-5)">−</div>' +
+            '<div class="score-stepper" ' + (locked ? 'style="opacity:0.3;pointer-events:none"' : '') + ' onclick="stepScore(\'' + p.name + '\',-5)">−</div>' +
             '<input type="number" id="inp_' + i + '" value="' + val + '" min="0" max="999" ' +
+            (locked ? 'readonly style="opacity:0.5" ' : '') +
             'oninput="game.getState().tempScores[\'' + p.name + '\']=parseInt(this.value)||0" />' +
-            '<div class="score-stepper" onclick="stepScore(\'' + p.name + '\',5)">+</div>' +
+            '<div class="score-stepper" ' + (locked ? 'style="opacity:0.3;pointer-events:none"' : '') + ' onclick="stepScore(\'' + p.name + '\',5)">+</div>' +
             '</div></div>';
     }).join('');
-
-    BoardScore.$('scoreModal').classList.add('open');
 }
+
+
 
 function stepScore(name, delta) {
     game.stepScore(name, delta, { min: 0 });
@@ -135,12 +175,34 @@ function stepScore(name, delta) {
 
 function confirmScores() {
     const state = game.getState();
+
+    // Validation : le gagnant doit être sélectionné
+    if (!state.tempWinner) {
+        const hint = BoardScore.$('winnerRequiredHint');
+        if (hint) {
+            hint.style.display = 'block';
+            setTimeout(() => hint.style.display = 'none', 2500);
+        }
+        const modal = document.querySelector('#scoreModal .modal');
+        if (modal) {
+            modal.style.transform = 'scale(1.02)';
+            setTimeout(() => modal.style.transform = '', 200);
+        }
+        return;
+    }
+
     const roundScores = {};
     const existingIdx = state.history.findIndex(h => h.round === state.round);
 
     state.players.forEach((p, i) => {
-        const inp = BoardScore.$('inp_' + i);
-        const newPts = parseInt(inp?.value) || 0;
+        const isWinner = state.tempWinner === p.name;
+        let newPts;
+        if (isWinner) {
+            newPts = 0;
+        } else {
+            const inp = BoardScore.$('inp_' + i);
+            newPts = parseInt(inp?.value) || 0;
+        }
         roundScores[p.name] = newPts;
 
         if (existingIdx !== -1) {
@@ -152,15 +214,16 @@ function confirmScores() {
     });
 
     if (existingIdx !== -1) {
-        state.history[existingIdx].scores = roundScores;
+        state.history[existingIdx] = { round: state.round, winner: state.tempWinner, scores: roundScores };
     } else {
-        state.history.push({ round: state.round, scores: roundScores });
+        state.history.push({ round: state.round, winner: state.tempWinner, scores: roundScores });
     }
 
     BoardScore.$('scoreModal').classList.remove('open');
     game.save();
     game.render();
 }
+
 
 
 /* ── New Game : domino set selector ── */

@@ -40,6 +40,26 @@ const BoardScore = (() => {
 
 
     /* ═══════════════════════════════════════════
+       ROSTER SYNC — ajoute auto les joueurs au roster global
+       ═══════════════════════════════════════════ */
+    function syncToRoster(name, color) {
+        try {
+            const roster = JSON.parse(localStorage.getItem('boardscore_players')) || [];
+            if (roster.find(p => p.name.toLowerCase() === name.toLowerCase())) return;
+            roster.push({ name, color });
+            localStorage.setItem('boardscore_players', JSON.stringify(roster));
+        } catch (e) {}
+    }
+
+
+    /* ═══════════════════════════════════════════
+       MATCH HISTORY — enregistre chaque fin de partie
+       Stocké dans localStorage sous "boardscore_matches"
+       (La fonction trackMatchResult est dans create() car elle utilise config.key)
+       ═══════════════════════════════════════════ */
+
+
+    /* ═══════════════════════════════════════════
        create(config)  —  Factory principale
        ═══════════════════════════════════════════ */
     function create(config) {
@@ -73,6 +93,20 @@ const BoardScore = (() => {
             } catch(e) {}
         }
 
+        /* ── Match tracking ── */
+        function trackMatchResult(sorted, winner) {
+            try {
+                const matches = JSON.parse(localStorage.getItem('boardscore_matches')) || [];
+                matches.push({
+                    game: config.key,
+                    date: Date.now(),
+                    winner: winner.name,
+                    players: sorted.map(p => ({ name: p.name, score: p.score })),
+                });
+                localStorage.setItem('boardscore_matches', JSON.stringify(matches));
+            } catch (e) {}
+        }
+
         /* ── Players ── */
         function addPlayer() {
             const input = $('newPlayerName');
@@ -84,8 +118,13 @@ const BoardScore = (() => {
                 return;
             }
             const idx = state.players.length % COLORS.length;
-            state.players.push({ name, score: 0, color: COLORS[idx] });
+            const color = COLORS[idx];
+            state.players.push({ name, score: 0, color });
             input.value = '';
+
+            // Sync auto vers le roster global
+            syncToRoster(name, color);
+
             save(); render();
         }
 
@@ -283,10 +322,13 @@ const BoardScore = (() => {
         /* ── Winner Screen ── */
         function showWinner() {
             const sortFn = config.highestWins
-                ? (a, b) => b.score - a.score   // plus haut = meilleur (Yam's)
-                : (a, b) => a.score - b.score;  // plus bas = meilleur (défaut)
+                ? (a, b) => b.score - a.score
+                : (a, b) => a.score - b.score;
             const sorted = [...state.players].sort(sortFn);
             const winner = sorted[0];
+
+            // Enregistrer la fin de partie dans l'historique global
+            trackMatchResult(sorted, winner);
 
             const nameEl = $('winnerName');
             const scoreEl = $('winnerScore');
@@ -392,17 +434,52 @@ const BoardScore = (() => {
         function renderNgNewList() {
             const list = $('ngNewList');
             if (!list) return;
+
+            let html = '';
+
+            // Roster quick-pick : joueurs enregistrés pas encore ajoutés
+            try {
+                const roster = JSON.parse(localStorage.getItem('boardscore_players')) || [];
+                const available = roster.filter(r => !ngNewPlayers.find(n => n.toLowerCase() === r.name.toLowerCase()));
+                if (available.length > 0) {
+                    html += '<div class="ng-roster-pick">';
+                    html += '<div class="ng-roster-label">Joueurs enregistrés</div>';
+                    html += '<div class="ng-roster-chips">';
+                    available.forEach(r => {
+                        html += '<button class="ng-roster-chip" onclick="game.ngAddFromRoster(\'' + r.name.replace(/'/g, "\\'") + '\')">' +
+                            '<span class="ng-chip-dot" style="background:' + r.color + '"></span>' + r.name +
+                            '</button>';
+                    });
+                    html += '</div></div>';
+                }
+            } catch (e) {}
+
+            // Liste des joueurs ajoutés
             if (ngNewPlayers.length === 0) {
-                list.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:4px 0 8px">Aucun joueur ajouté.</div>';
-                return;
+                html += '<div style="color:var(--muted);font-size:0.82rem;padding:4px 0 8px">Aucun joueur ajouté.</div>';
+            } else {
+                // Chercher les couleurs dans le roster pour le preview
+                var rosterPreview = [];
+                try { rosterPreview = JSON.parse(localStorage.getItem('boardscore_players')) || []; } catch(e) {}
+                html += ngNewPlayers.map((p, i) => {
+                    const rp = rosterPreview.find(r => r.name.toLowerCase() === p.toLowerCase());
+                    const color = rp ? rp.color : COLORS[i % COLORS.length];
+                    return '<div class="new-player-row">' +
+                        '<div class="np-avatar" style="background:' + color + '">' + getInitial(p) + '</div>' +
+                        '<div class="np-name">' + p + '</div>' +
+                        '<div class="np-remove" onclick="game.ngRemovePlayer(' + i + ')">✕</div>' +
+                        '</div>';
+                }).join('');
             }
-            list.innerHTML = ngNewPlayers.map((p, i) =>
-                '<div class="new-player-row">' +
-                '<div class="np-avatar" style="background:' + COLORS[i % COLORS.length] + '">' + getInitial(p) + '</div>' +
-                '<div class="np-name">' + p + '</div>' +
-                '<div class="np-remove" onclick="game.ngRemovePlayer(' + i + ')">✕</div>' +
-                '</div>'
-            ).join('');
+
+            list.innerHTML = html;
+        }
+
+        function ngAddFromRoster(name) {
+            if (ngNewPlayers.find(n => n.toLowerCase() === name.toLowerCase())) return;
+            ngNewPlayers.push(name);
+            renderNgNewList();
+            if (config.onNgPlayersChanged) config.onNgPlayersChanged(ngNewPlayers);
         }
 
         function ngAddPlayer() {
@@ -433,12 +510,22 @@ const BoardScore = (() => {
                 if (newPlayers.length === 0) { alert('Sélectionne au moins un joueur !'); return; }
             } else {
                 if (ngNewPlayers.length === 0) { alert('Ajoute au moins un joueur !'); return; }
-                newPlayers = ngNewPlayers.map((name, i) => ({ name, score: 0, color: COLORS[i % COLORS.length] }));
+                // Chercher la couleur dans le roster, sinon fallback sur COLORS
+                var roster = [];
+                try { roster = JSON.parse(localStorage.getItem('boardscore_players')) || []; } catch(e) {}
+                newPlayers = ngNewPlayers.map((name, i) => {
+                    const rosterPlayer = roster.find(r => r.name.toLowerCase() === name.toLowerCase());
+                    const color = rosterPlayer ? rosterPlayer.color : COLORS[i % COLORS.length];
+                    return { name, score: 0, color };
+                });
             }
 
             state.players = newPlayers;
             state.round = 1;
             state.history = [];
+
+            // Sync tous les nouveaux joueurs vers le roster
+            newPlayers.forEach(p => syncToRoster(p.name, p.color));
 
             // Hook pour données custom (dealerIdx, dominoMax, scoreLimit…)
             if (config.onConfirmNewGame) config.onConfirmNewGame(state);
@@ -541,6 +628,7 @@ const BoardScore = (() => {
             selectPlayerMode,
             toggleKeepPlayer,
             ngAddPlayer,
+            ngAddFromRoster,
             ngRemovePlayer,
             confirmNewGame,
             getNgMode()       { return ngMode; },
