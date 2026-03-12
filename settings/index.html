@@ -36,9 +36,16 @@
         </div>
     </div>
 
-    <!-- Section : Statistiques -->
+    <!-- Section : Stats générales -->
+    <div class="section" id="generalStatsSection">
+        <div class="section-title">🏆 Stats générales</div>
+        <div class="section-sub">Vue d'ensemble de toutes les parties terminées</div>
+        <div id="generalStatsList"></div>
+    </div>
+
+    <!-- Section : Statistiques par joueur -->
     <div class="section" id="statsSection">
-        <div class="section-title">📊 Statistiques</div>
+        <div class="section-title">📊 Statistiques par joueur</div>
         <div class="section-sub">Résumé de toutes les parties jouées</div>
         <div id="statsList" class="stats-list"></div>
     </div>
@@ -52,6 +59,16 @@
         </div>
     </div>
 
+</div>
+
+<!-- Top3 detail modal -->
+<div class="modal-overlay" id="top3Modal" onclick="closeTop3Modal(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🏆 Détail — Top joueurs</div>
+        <div class="modal-sub">Stats par jeu des meilleurs vainqueurs</div>
+        <div id="top3Content"></div>
+    </div>
 </div>
 
 <!-- Edit player modal -->
