@@ -262,16 +262,16 @@ function renderStats() {
     list.innerHTML = playerStats.map((s, idx) => {
         const winRate = s.games > 0 ? Math.round((s.wins / s.games) * 100) : 0;
 
-        // Trouver le meilleur score tous jeux confondus
-        let bestText = '';
-        let bestScore = null;
-        Object.entries(s.byGame).forEach(([gk, bg]) => {
-            if (bg.best !== null && (bestScore === null || bg.best > bestScore)) {
-                bestScore = bg.best;
-                const gInfo = GAME_NAMES[gk] || { name: gk, emoji: '🎮' };
-                bestText = gInfo.emoji + ' ' + bg.best + ' pts (' + gInfo.name + ')';
-            }
-        });
+        // Trouver le dernier match joué par ce joueur
+        let lastText = '';
+        const playerMatches = matches.filter(m => m.players.find(pl => pl.name === s.name));
+        if (playerMatches.length > 0) {
+            const last = playerMatches[playerMatches.length - 1];
+            const lastEntry = last.players.find(pl => pl.name === s.name);
+            const gInfo = GAME_NAMES[last.game] || { name: last.game, emoji: '🎮' };
+            const won = last.winner === s.name;
+            lastText = gInfo.emoji + ' ' + lastEntry.score + ' pts (' + gInfo.name + ')' + (won ? ' 🏆' : '');
+        }
 
         return '<div class="stat-card">' +
             '<div class="stat-header">' +
@@ -292,9 +292,9 @@ function renderStats() {
             '<div class="stat-label">Win rate</div>' +
             '</div>' +
             '</div>' +
-            (bestText
+            (lastText
                 ? '<div class="stat-best-row">' +
-                '<span class="stat-best-text">Meilleur : ' + bestText + '</span>' +
+                '<span class="stat-best-text">Dernier : ' + lastText + '</span>' +
                 '<button class="stat-detail-btn" onclick="openStatDetail(' + idx + ')">ℹ️</button>' +
                 '</div>'
                 : '<div class="stat-best-row"><span class="stat-best-text">Aucune partie terminée</span></div>') +

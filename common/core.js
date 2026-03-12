@@ -458,13 +458,18 @@ const BoardScore = (() => {
             if (ngNewPlayers.length === 0) {
                 html += '<div style="color:var(--muted);font-size:0.82rem;padding:4px 0 8px">Aucun joueur ajouté.</div>';
             } else {
-                html += ngNewPlayers.map((p, i) =>
-                    '<div class="new-player-row">' +
-                    '<div class="np-avatar" style="background:' + COLORS[i % COLORS.length] + '">' + getInitial(p) + '</div>' +
-                    '<div class="np-name">' + p + '</div>' +
-                    '<div class="np-remove" onclick="game.ngRemovePlayer(' + i + ')">✕</div>' +
-                    '</div>'
-                ).join('');
+                // Chercher les couleurs dans le roster pour le preview
+                var rosterPreview = [];
+                try { rosterPreview = JSON.parse(localStorage.getItem('boardscore_players')) || []; } catch(e) {}
+                html += ngNewPlayers.map((p, i) => {
+                    const rp = rosterPreview.find(r => r.name.toLowerCase() === p.toLowerCase());
+                    const color = rp ? rp.color : COLORS[i % COLORS.length];
+                    return '<div class="new-player-row">' +
+                        '<div class="np-avatar" style="background:' + color + '">' + getInitial(p) + '</div>' +
+                        '<div class="np-name">' + p + '</div>' +
+                        '<div class="np-remove" onclick="game.ngRemovePlayer(' + i + ')">✕</div>' +
+                        '</div>';
+                }).join('');
             }
 
             list.innerHTML = html;
@@ -505,7 +510,14 @@ const BoardScore = (() => {
                 if (newPlayers.length === 0) { alert('Sélectionne au moins un joueur !'); return; }
             } else {
                 if (ngNewPlayers.length === 0) { alert('Ajoute au moins un joueur !'); return; }
-                newPlayers = ngNewPlayers.map((name, i) => ({ name, score: 0, color: COLORS[i % COLORS.length] }));
+                // Chercher la couleur dans le roster, sinon fallback sur COLORS
+                var roster = [];
+                try { roster = JSON.parse(localStorage.getItem('boardscore_players')) || []; } catch(e) {}
+                newPlayers = ngNewPlayers.map((name, i) => {
+                    const rosterPlayer = roster.find(r => r.name.toLowerCase() === name.toLowerCase());
+                    const color = rosterPlayer ? rosterPlayer.color : COLORS[i % COLORS.length];
+                    return { name, score: 0, color };
+                });
             }
 
             state.players = newPlayers;

@@ -1,0 +1,6 @@
+- Système de statistiques par joueur - **FAIT**
+- Classement global - **FAIT**
+- Informations sur l'application depuis le menu
+- Récap de soirée
+- Message explicite "Reprendre la partie en cours ?" au lancement si on quitte la partie en cours de route
+- QR code que les joueurs peuvent scanner pour voir les scores en temps réel
