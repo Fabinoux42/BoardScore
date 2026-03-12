@@ -40,6 +40,19 @@ const BoardScore = (() => {
 
 
     /* ═══════════════════════════════════════════
+       ROSTER SYNC — ajoute auto les joueurs au roster global
+       ═══════════════════════════════════════════ */
+    function syncToRoster(name, color) {
+        try {
+            const roster = JSON.parse(localStorage.getItem('boardscore_players')) || [];
+            if (roster.find(p => p.name.toLowerCase() === name.toLowerCase())) return;
+            roster.push({ name, color });
+            localStorage.setItem('boardscore_players', JSON.stringify(roster));
+        } catch (e) {}
+    }
+
+
+    /* ═══════════════════════════════════════════
        create(config)  —  Factory principale
        ═══════════════════════════════════════════ */
     function create(config) {
@@ -84,8 +97,13 @@ const BoardScore = (() => {
                 return;
             }
             const idx = state.players.length % COLORS.length;
-            state.players.push({ name, score: 0, color: COLORS[idx] });
+            const color = COLORS[idx];
+            state.players.push({ name, score: 0, color });
             input.value = '';
+
+            // Sync auto vers le roster global
+            syncToRoster(name, color);
+
             save(); render();
         }
 
@@ -439,6 +457,9 @@ const BoardScore = (() => {
             state.players = newPlayers;
             state.round = 1;
             state.history = [];
+
+            // Sync tous les nouveaux joueurs vers le roster
+            newPlayers.forEach(p => syncToRoster(p.name, p.color));
 
             // Hook pour données custom (dealerIdx, dominoMax, scoreLimit…)
             if (config.onConfirmNewGame) config.onConfirmNewGame(state);
