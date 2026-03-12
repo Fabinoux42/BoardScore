@@ -36,3 +36,33 @@
     color: var(--accent);
     margin-bottom: 10px;
 }
+
+/* ── Timeline scrollable ── */
+.timeline-scroll-wrap {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    /* Petite scrollbar discrète */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    /* Arrondi + padding pour que la scrollbar ne colle pas au bord */
+    padding-bottom: 4px;
+    margin: 0 -4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    /* Hauteur min = celle du canvas */
+    min-height: 100px;
+}
+.timeline-scroll-wrap::-webkit-scrollbar {
+    height: 4px;
+}
+.timeline-scroll-wrap::-webkit-scrollbar-track {
+    background: transparent;
+}
+.timeline-scroll-wrap::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+.timeline-scroll-wrap canvas {
+    display: block;
+}

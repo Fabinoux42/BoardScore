@@ -145,8 +145,8 @@ function renderGeneralStats() {
         '</div>' +
         '<div class="chart-card">' +
         '<div class="chart-title">📈 Activité dans le temps</div>' +
-        '<div class="chart-sub">Parties par ' + intervalFR() + ' · bâtonnet = parties · ligne = temps estimé (' + timeLabel() + ')</div>' +
-        '<canvas id="timelineChart" width="400" height="220" style="width:100%;height:auto;display:block"></canvas>' +
+        '<div class="chart-sub">Bâtonnet = nb de parties · Ligne = temps moyen de jeu par jour actif (' + timeLabel() + '). Scroll ←→ si besoin.</div>' +
+        '<div class="timeline-scroll-wrap"><canvas id="timelineChart"></canvas></div>' +
         '</div>';
 
     requestAnimationFrame(() => {
@@ -653,27 +653,31 @@ function drawPlayerBarChart(matches) {
    HISTOGRAMME TIMELINE
    ══════════════════════════════════════════ */
 function drawTimelineChart(matches) {
+    /* ── Constante : largeur minimale par bâtonnet (px) ── */
+    const MIN_BAR_STEP = 50;
+
+    const wrap = document.querySelector('.timeline-scroll-wrap');
     const canvas = document.getElementById('timelineChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    const W = canvas.offsetWidth || 400, H = 220;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    ctx.scale(dpr, dpr);
+    if (!canvas || !wrap) return;
 
     const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
     const textColor  = isDark ? '#c8b8e8' : '#2d1f5e';
     const mutedColor = isDark ? '#6b5a88' : '#9a8ab8';
     const gridColor  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    const yearColor  = isDark ? '#f5c542aa' : '#b8860b';
+    const monthColor = isDark ? '#38bdf8aa' : '#1e90ff';
     const barColor   = '#9b59f5';
     const lineColor  = '#38bdf8';
 
-    const intervalMap = {};
+    /* ── Construire les intervalles ── */
+    const intervalMap = {}; // key → { games, minutes, activeDays (Set de date strings) }
     matches.forEach(m => {
         const key = getIntervalKey(m.date);
-        if (!intervalMap[key]) intervalMap[key] = { games: 0, minutes: 0 };
+        if (!intervalMap[key]) intervalMap[key] = { games: 0, minutes: 0, activeDays: new Set() };
         intervalMap[key].games++;
         intervalMap[key].minutes += GAME_DURATION_MIN[m.game] || 30;
+        const d = new Date(m.date);
+        intervalMap[key].activeDays.add(d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate());
     });
 
     const keys = Object.keys(intervalMap).map(Number).sort((a, b) => a - b);
@@ -689,48 +693,64 @@ function drawTimelineChart(matches) {
         } else cur += 24 * 3600 * 1000;
     }
 
-    const data = allKeys.map(k => ({
-        key: k,
-        date: new Date(k),
-        games: intervalMap[k] ? intervalMap[k].games : 0,
-        time: intervalMap[k] ? convertTime(intervalMap[k].minutes) : 0,
-    }));
+    const data = allKeys.map(k => {
+        const iv = intervalMap[k];
+        const activeDaysCount = iv ? iv.activeDays.size : 0;
+        const totalMinutes = iv ? iv.minutes : 0;
+        // Temps moyen par jour actif de cet intervalle
+        const avgDailyTime = activeDaysCount > 0 ? convertTime(totalMinutes / activeDaysCount) : 0;
+        return { key: k, date: new Date(k), games: iv ? iv.games : 0, avgDailyTime };
+    });
 
-    const maxGames = Math.max(...data.map(d => d.games), 1);
-    const maxTime  = Math.max(...data.map(d => d.time), 1);
-    const gSteps   = niceSteps(maxGames);
+    const n = data.length;
+    const PAD_L = 36, PAD_R = 42, PAD_T = 20, PAD_B = 52;
+    const H = 220;
 
-    const PAD_L = 34, PAD_R = 38, PAD_T = 16, PAD_B = 42;
+    /* ── Largeur du canvas : au moins MIN_BAR_STEP par barre ── */
+    const minW = PAD_L + PAD_R + n * MIN_BAR_STEP;
+    const containerW = wrap.offsetWidth || 340;
+    const W = Math.max(containerW, minW);
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
     const chartW = W - PAD_L - PAD_R;
     const chartH = H - PAD_T - PAD_B;
 
-    // Grille + axe gauche (parties)
+    const maxGames = Math.max(...data.map(d => d.games), 1);
+    const maxTime  = Math.max(...data.map(d => d.avgDailyTime), 1);
+    const gSteps   = niceSteps(maxGames);
+    const tSteps   = niceSteps(Math.ceil(maxTime));
+
+    /* ── Grille + axe gauche (parties) ── */
     for (let i = 0; i <= gSteps; i++) {
         const val = Math.round((i / gSteps) * maxGames);
         const y = PAD_T + chartH - (val / maxGames) * chartH;
         ctx.strokeStyle = gridColor; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke();
         ctx.fillStyle = mutedColor;
-        ctx.font = Math.round(W * 0.027) + 'px DM Sans,sans-serif';
+        ctx.font = Math.round(H * 0.052) + 'px DM Sans,sans-serif';
         ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
         ctx.fillText(val, PAD_L - 5, y);
     }
 
-    // Axe droit (temps)
-    const tSteps = niceSteps(Math.ceil(maxTime));
+    /* ── Axe droit (moy. temps/jour actif) ── */
     for (let i = 0; i <= tSteps; i++) {
-        const val = Math.round((i / tSteps) * maxTime);
+        const val = +(( i / tSteps) * maxTime).toFixed(CHART_TIME_UNIT === 'hour' ? 1 : 0);
         const y = PAD_T + chartH - (i / tSteps) * chartH;
         ctx.fillStyle = lineColor + 'aa';
-        ctx.font = Math.round(W * 0.027) + 'px DM Sans,sans-serif';
+        ctx.font = Math.round(H * 0.052) + 'px DM Sans,sans-serif';
         ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
         ctx.fillText(val, W - PAD_R + 4, y);
     }
 
-    const step = chartW / Math.max(data.length, 1);
-    const barW = Math.max(4, Math.min(28, step * 0.7));
+    const step = chartW / Math.max(n, 1);
+    const barW = Math.max(6, Math.min(32, step * 0.65));
 
-    // Barres
+    /* ── Barres ── */
     data.forEach((d, i) => {
         if (d.games === 0) return;
         const x = PAD_L + step * i + step / 2;
@@ -739,70 +759,125 @@ function drawTimelineChart(matches) {
         const rx = x - barW / 2, rr = Math.min(4, barW / 2);
         ctx.fillStyle = barColor + 'bb';
         ctx.beginPath();
-        ctx.moveTo(rx + rr, y);
-        ctx.lineTo(rx + barW - rr, y);
+        ctx.moveTo(rx + rr, y); ctx.lineTo(rx + barW - rr, y);
         ctx.quadraticCurveTo(rx + barW, y, rx + barW, y + rr);
-        ctx.lineTo(rx + barW, y + bH);
-        ctx.lineTo(rx, y + bH);
-        ctx.lineTo(rx, y + rr);
+        ctx.lineTo(rx + barW, y + bH); ctx.lineTo(rx, y + bH); ctx.lineTo(rx, y + rr);
         ctx.quadraticCurveTo(rx, y, rx + rr, y);
-        ctx.closePath();
-        ctx.fill();
+        ctx.closePath(); ctx.fill();
     });
 
-    // Ligne de temps
+    /* ── Ligne temps moyen/jour ── */
     ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.lineJoin = 'round';
     ctx.beginPath();
-    let first = true;
+    let firstPt = true;
     data.forEach((d, i) => {
         const x = PAD_L + step * i + step / 2;
-        const y = PAD_T + chartH - (d.time / maxTime) * chartH;
-        if (first) { ctx.moveTo(x, y); first = false; } else ctx.lineTo(x, y);
+        const y = PAD_T + chartH - (d.avgDailyTime / maxTime) * chartH;
+        if (firstPt) { ctx.moveTo(x, y); firstPt = false; } else ctx.lineTo(x, y);
     });
     ctx.stroke();
     data.forEach((d, i) => {
-        if (d.time === 0) return;
+        if (d.avgDailyTime === 0) return;
         const x = PAD_L + step * i + step / 2;
-        const y = PAD_T + chartH - (d.time / maxTime) * chartH;
+        const y = PAD_T + chartH - (d.avgDailyTime / maxTime) * chartH;
         ctx.beginPath(); ctx.arc(x, y, 3, 0, 2 * Math.PI);
         ctx.fillStyle = lineColor; ctx.fill();
     });
 
-    // Labels abscisse
-    let lastLbl = -1;
+    /* ── Labels abscisse avec marqueurs année/mois ── */
+    const DAY_LETTERS = ['D', 'L', 'M', 'Me', 'J', 'V', 'S']; // dim..sam
+    let lastYear = -1, lastMonth = -1;
+    const LABEL_FONT_SIZE = Math.round(H * 0.05);
+
     data.forEach((d, i) => {
         const x = PAD_L + step * i + step / 2;
-        let showLabel = false, label = '';
-        if (CHART_X_AXIS_UNIT === 'month') {
-            const mo = d.date.getMonth();
-            if (mo !== lastLbl) { showLabel = true; label = MONTH_NAMES_SHORT[mo]; lastLbl = mo; }
-        } else {
-            const wn = getWeekNumber(d.date);
-            if (wn !== lastLbl) { showLabel = true; label = 'S' + wn; lastLbl = wn; }
+        const yr = d.date.getFullYear();
+        const mo = d.date.getMonth();
+        const dayNum = d.date.getDate();
+        const dayOfWeek = d.date.getDay();
+
+        /* ── Marqueur année (ligne verticale dorée + label) ── */
+        if (yr !== lastYear) {
+            ctx.strokeStyle = yearColor;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath(); ctx.moveTo(x - step / 2, PAD_T); ctx.lineTo(x - step / 2, PAD_T + chartH); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = yearColor;
+            ctx.font = 'bold ' + LABEL_FONT_SIZE + 'px DM Sans,sans-serif';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+            ctx.fillText(yr, x - step / 2 + 3, PAD_T + 2);
+            lastYear = yr;
         }
-        if (showLabel) {
-            ctx.fillStyle = textColor;
-            ctx.font = Math.round(W * 0.028) + 'px DM Sans,sans-serif';
+
+        /* ── Marqueur mois (pour intervals day/week) ── */
+        const showMonthMarker = mo !== lastMonth && CHART_BAR_INTERVAL !== 'month';
+        if (showMonthMarker && yr === lastYear) { // (l'année est déjà affichée si yr change)
+            ctx.strokeStyle = monthColor;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 4]);
+            ctx.beginPath(); ctx.moveTo(x - step / 2, PAD_T + 18); ctx.lineTo(x - step / 2, PAD_T + chartH); ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        /* ── Label abscisse ── */
+        let label = '';
+        if (CHART_BAR_INTERVAL === 'day') {
+            // Format : "J.12" (lettre du jour + n° du jour)
+            const dl = DAY_LETTERS[dayOfWeek];
+            // Afficher tous les jours si peu, sinon 1 sur N
+            label = dl + '.' + dayNum;
+        } else if (CHART_BAR_INTERVAL === 'week') {
+            // Format : "10 Mar" (début de semaine : jour + mois)
+            if (mo !== lastMonth || i === 0) {
+                label = dayNum + ' ' + MONTH_NAMES_SHORT[mo]; // changement de mois → mois complet
+            } else {
+                label = '' + dayNum; // même mois → juste le numéro
+            }
+        } else {
+            // month interval → "Mar", "Avr"…
+            label = MONTH_NAMES_SHORT[mo];
+        }
+
+        lastMonth = mo;
+
+        if (label) {
+            const isMajor = CHART_BAR_INTERVAL === 'week' && label.includes(' ');
+            ctx.fillStyle = isMajor ? (isDark ? '#c8b8e8' : '#2d1f5e') : mutedColor;
+            ctx.font = (isMajor ? 'bold ' : '') + LABEL_FONT_SIZE + 'px DM Sans,sans-serif';
             ctx.textAlign = 'center'; ctx.textBaseline = 'top';
             ctx.fillText(label, x, PAD_T + chartH + 6);
-            ctx.strokeStyle = mutedColor + '44'; ctx.lineWidth = 1;
+            // Petite marque
+            ctx.strokeStyle = (isMajor ? monthColor : mutedColor + '55');
+            ctx.lineWidth = isMajor ? 1.5 : 1;
             ctx.beginPath(); ctx.moveTo(x, PAD_T + chartH); ctx.lineTo(x, PAD_T + chartH + 5); ctx.stroke();
         }
     });
 
-    // Légende basse
-    const ly = H - 9;
+    /* ── Légende basse ── */
+    const ly = H - 10;
     ctx.fillStyle = barColor;
     ctx.fillRect(PAD_L, ly - 2, 10, 4);
     ctx.fillStyle = mutedColor;
-    ctx.font = Math.round(W * 0.026) + 'px DM Sans,sans-serif';
+    ctx.font = Math.round(H * 0.048) + 'px DM Sans,sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.fillText('Parties', PAD_L + 14, ly);
-    ctx.strokeStyle = lineColor; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(PAD_L + 72, ly); ctx.lineTo(PAD_L + 82, ly); ctx.stroke();
-    ctx.fillText('Temps (' + timeLabel() + ')', PAD_L + 86, ly);
-}
 
+    ctx.strokeStyle = lineColor; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(PAD_L + 74, ly); ctx.lineTo(PAD_L + 84, ly); ctx.stroke();
+    ctx.fillStyle = mutedColor;
+    ctx.fillText('Moy. ' + timeLabel() + '/jour', PAD_L + 88, ly);
+
+    // Légende marqueurs
+    ctx.fillStyle = yearColor;
+    ctx.fillRect(PAD_L + 160, ly - 3, 3, 6);
+    ctx.fillStyle = mutedColor;
+    ctx.fillText('Année', PAD_L + 168, ly);
+
+    ctx.fillStyle = monthColor;
+    ctx.fillRect(PAD_L + 218, ly - 3, 3, 6);
+    ctx.fillText('Mois', PAD_L + 226, ly);
+}
 
 /* ══════════════════════════════════════════
    UTILITAIRE
