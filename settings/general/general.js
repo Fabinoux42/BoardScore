@@ -145,7 +145,7 @@ function renderGeneralStats() {
         '</div>' +
         '<div class="chart-card">' +
         '<div class="chart-title">📈 Activité dans le temps</div>' +
-        '<div class="chart-sub">Bâtonnet = nb de parties · Ligne = temps moyen de jeu par jour actif (' + timeLabel() + '). Scroll ←→ si besoin.</div>' +
+        '<div class="chart-sub">Bâtonnet = parties · Courbe rose = temps/jour · Ligne bleue = moyenne (' + timeLabel() + '). Scroll ←→</div>' +
         '<div class="timeline-scroll-wrap"><canvas id="timelineChart"></canvas></div>' +
         '</div>';
 
@@ -327,7 +327,8 @@ function drawTop3GameChart(canvas, players) {
         const rx = x - barW / 2, rr = Math.min(6, barW / 2);
 
         // Barre arrondie
-        ctx.fillStyle = p.color + 'cc';
+        ctx.globalAlpha = 0.82;
+        ctx.fillStyle = p.color;
         if (barH > 0) {
             ctx.beginPath();
             ctx.moveTo(rx + rr, y);
@@ -339,9 +340,11 @@ function drawTop3GameChart(canvas, players) {
             ctx.quadraticCurveTo(rx, y, rx + rr, y);
             ctx.closePath();
             ctx.fill();
+            ctx.globalAlpha = 1;
         } else {
+            ctx.globalAlpha = 1;
             // Petite marque si 0 victoires
-            ctx.fillStyle = mutedColor + '44';
+            ctx.fillStyle = mutedColor;
             ctx.fillRect(rx, PAD_T + chartH - 2, barW, 2);
         }
 
@@ -617,7 +620,8 @@ function drawPlayerBarChart(matches) {
         const color = colorMap[name] || CHART_COLORS[i % CHART_COLORS.length];
         const rx = x - barW / 2, rr = 5;
 
-        ctx.fillStyle = color + 'cc';
+        ctx.globalAlpha = 0.82;
+        ctx.fillStyle = color;
         ctx.beginPath();
         ctx.moveTo(rx + rr, y);
         ctx.lineTo(rx + barW - rr, y);
@@ -628,6 +632,7 @@ function drawPlayerBarChart(matches) {
         ctx.quadraticCurveTo(rx, y, rx + rr, y);
         ctx.closePath();
         ctx.fill();
+        ctx.globalAlpha = 1;
 
         // Valeur
         ctx.fillStyle = textColor;
@@ -653,7 +658,6 @@ function drawPlayerBarChart(matches) {
    HISTOGRAMME TIMELINE
    ══════════════════════════════════════════ */
 function drawTimelineChart(matches) {
-    /* ── Constante : largeur minimale par bâtonnet (px) ── */
     const MIN_BAR_STEP = 50;
 
     const wrap = document.querySelector('.timeline-scroll-wrap');
@@ -664,13 +668,14 @@ function drawTimelineChart(matches) {
     const textColor  = isDark ? '#c8b8e8' : '#2d1f5e';
     const mutedColor = isDark ? '#6b5a88' : '#9a8ab8';
     const gridColor  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
-    const yearColor  = isDark ? '#f5c542aa' : '#b8860b';
-    const monthColor = isDark ? '#38bdf8aa' : '#1e90ff';
+    const yearColor  = isDark ? '#f5c542' : '#b8860b';
+    const monthColor = isDark ? '#38bdf8' : '#1e90ff';
     const barColor   = '#9b59f5';
-    const lineColor  = '#38bdf8';
+    const curveColor = '#fb7185';   // courbe temps/jour (rose)
+    const avgColor   = '#38bdf8';   // ligne moyenne (bleu pointillé)
 
     /* ── Construire les intervalles ── */
-    const intervalMap = {}; // key → { games, minutes, activeDays (Set de date strings) }
+    const intervalMap = {};
     matches.forEach(m => {
         const key = getIntervalKey(m.date);
         if (!intervalMap[key]) intervalMap[key] = { games: 0, minutes: 0, activeDays: new Set() };
@@ -697,16 +702,21 @@ function drawTimelineChart(matches) {
         const iv = intervalMap[k];
         const activeDaysCount = iv ? iv.activeDays.size : 0;
         const totalMinutes = iv ? iv.minutes : 0;
-        // Temps moyen par jour actif de cet intervalle
-        const avgDailyTime = activeDaysCount > 0 ? convertTime(totalMinutes / activeDaysCount) : 0;
-        return { key: k, date: new Date(k), games: iv ? iv.games : 0, avgDailyTime };
+        // Temps total par jour actif (pour la courbe)
+        const dailyTime = activeDaysCount > 0 ? convertTime(totalMinutes / activeDaysCount) : 0;
+        return { key: k, date: new Date(k), games: iv ? iv.games : 0, dailyTime };
     });
 
-    const n = data.length;
-    const PAD_L = 36, PAD_R = 42, PAD_T = 20, PAD_B = 52;
-    const H = 220;
+    /* ── Moyenne globale du temps/jour ── */
+    const activePts = data.filter(d => d.dailyTime > 0);
+    const avgDailyTime = activePts.length > 0
+        ? activePts.reduce((s, d) => s + d.dailyTime, 0) / activePts.length
+        : 0;
 
-    /* ── Largeur du canvas : au moins MIN_BAR_STEP par barre ── */
+    const n = data.length;
+    const PAD_L = 36, PAD_R = 42, PAD_T = 20, PAD_B = 56;
+    const H = 240;
+
     const minW = PAD_L + PAD_R + n * MIN_BAR_STEP;
     const containerW = wrap.offsetWidth || 340;
     const W = Math.max(containerW, minW);
@@ -720,182 +730,263 @@ function drawTimelineChart(matches) {
     const chartW = W - PAD_L - PAD_R;
     const chartH = H - PAD_T - PAD_B;
 
-    const maxGames = Math.max(...data.map(d => d.games), 1);
-    const maxTime  = Math.max(...data.map(d => d.avgDailyTime), 1);
-    const gSteps   = niceSteps(maxGames);
-    const tSteps   = niceSteps(Math.ceil(maxTime));
+    const maxGames   = Math.max(...data.map(d => d.games), 1);
+    const maxTime    = Math.max(...data.map(d => d.dailyTime), avgDailyTime, 1);
+    const gSteps     = niceSteps(maxGames);
+    const tSteps     = niceSteps(Math.ceil(maxTime));
+    const step       = chartW / Math.max(n, 1);
+    const barW       = Math.max(6, Math.min(32, step * 0.65));
+    const LABEL_FS   = Math.round(H * 0.048);
 
-    /* ── Grille + axe gauche (parties) ── */
+    /* ══════════════════════════
+       COUCHE 1 — Grille + axes
+       ══════════════════════════ */
     for (let i = 0; i <= gSteps; i++) {
         const val = Math.round((i / gSteps) * maxGames);
         const y = PAD_T + chartH - (val / maxGames) * chartH;
         ctx.strokeStyle = gridColor; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke();
         ctx.fillStyle = mutedColor;
-        ctx.font = Math.round(H * 0.052) + 'px DM Sans,sans-serif';
+        ctx.font = Math.round(H * 0.05) + 'px DM Sans,sans-serif';
         ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
         ctx.fillText(val, PAD_L - 5, y);
     }
-
-    /* ── Axe droit (moy. temps/jour actif) ── */
     for (let i = 0; i <= tSteps; i++) {
         const val = +(( i / tSteps) * maxTime).toFixed(CHART_TIME_UNIT === 'hour' ? 1 : 0);
         const y = PAD_T + chartH - (i / tSteps) * chartH;
-        ctx.fillStyle = lineColor + 'aa';
-        ctx.font = Math.round(H * 0.052) + 'px DM Sans,sans-serif';
+        ctx.fillStyle = curveColor + '99';
+        ctx.font = Math.round(H * 0.05) + 'px DM Sans,sans-serif';
         ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
         ctx.fillText(val, W - PAD_R + 4, y);
     }
 
-    const step = chartW / Math.max(n, 1);
-    const barW = Math.max(6, Math.min(32, step * 0.65));
-
-    /* ── Barres ── */
+    /* ══════════════════════════
+       COUCHE 2 — Barres
+       ══════════════════════════ */
     data.forEach((d, i) => {
         if (d.games === 0) return;
         const x = PAD_L + step * i + step / 2;
         const bH = (d.games / maxGames) * chartH;
-        const y = PAD_T + chartH - bH;
+        const y  = PAD_T + chartH - bH;
         const rx = x - barW / 2, rr = Math.min(4, barW / 2);
-        ctx.fillStyle = barColor + 'bb';
+        ctx.globalAlpha = 0.75;
+        ctx.fillStyle = barColor;
         ctx.beginPath();
         ctx.moveTo(rx + rr, y); ctx.lineTo(rx + barW - rr, y);
         ctx.quadraticCurveTo(rx + barW, y, rx + barW, y + rr);
         ctx.lineTo(rx + barW, y + bH); ctx.lineTo(rx, y + bH); ctx.lineTo(rx, y + rr);
         ctx.quadraticCurveTo(rx, y, rx + rr, y);
         ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = 1;
     });
 
-    /* ── Ligne temps moyen/jour ── */
-    ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.lineJoin = 'round';
-    ctx.beginPath();
-    let firstPt = true;
-    data.forEach((d, i) => {
-        const x = PAD_L + step * i + step / 2;
-        const y = PAD_T + chartH - (d.avgDailyTime / maxTime) * chartH;
-        if (firstPt) { ctx.moveTo(x, y); firstPt = false; } else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-    data.forEach((d, i) => {
-        if (d.avgDailyTime === 0) return;
-        const x = PAD_L + step * i + step / 2;
-        const y = PAD_T + chartH - (d.avgDailyTime / maxTime) * chartH;
-        ctx.beginPath(); ctx.arc(x, y, 3, 0, 2 * Math.PI);
-        ctx.fillStyle = lineColor; ctx.fill();
-    });
-
-    /* ── Labels abscisse avec marqueurs année/mois ── */
-    const DAY_LETTERS = ['D', 'L', 'M', 'Me', 'J', 'V', 'S']; // dim..sam
+    /* ══════════════════════════
+       COUCHE 3 — Marqueurs mois
+       ══════════════════════════ */
     let lastYear = -1, lastMonth = -1;
-    const LABEL_FONT_SIZE = Math.round(H * 0.05);
+    // pré-calcul pour ne pas mélanger avec couche suivante
+    const markers = data.map((d, i) => ({
+        x: PAD_L + step * i + step / 2,
+        yr: d.date.getFullYear(),
+        mo: d.date.getMonth(),
+        dayNum: d.date.getDate(),
+        dayOfWeek: d.date.getDay(),
+    }));
 
-    data.forEach((d, i) => {
-        const x = PAD_L + step * i + step / 2;
-        const yr = d.date.getFullYear();
-        const mo = d.date.getMonth();
-        const dayNum = d.date.getDate();
-        const dayOfWeek = d.date.getDay();
-
-        /* ── Marqueur année (ligne verticale dorée + label pill) ── */
-        const yearChanged = yr !== lastYear;
-        if (yearChanged) {
-            const lx = x - step / 2;
-            // Ligne pointillée
-            ctx.strokeStyle = yearColor;
+    markers.forEach((m, i) => {
+        const yearChanged = m.yr !== lastYear;
+        if (!yearChanged && m.mo !== lastMonth && CHART_BAR_INTERVAL !== 'month') {
+            // Ligne bleue pleine (devant les barres)
+            ctx.globalAlpha = 0.85;
+            ctx.strokeStyle = monthColor;
             ctx.lineWidth = 1.5;
-            ctx.setLineDash([3, 3]);
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(m.x - step / 2, PAD_T);
+            ctx.lineTo(m.x - step / 2, PAD_T + chartH);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+            // Label mois
+            ctx.fillStyle = monthColor;
+            ctx.font = 'bold ' + Math.round(LABEL_FS * 0.88) + 'px DM Sans,sans-serif';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+            ctx.fillText(MONTH_NAMES_SHORT[m.mo], m.x - step / 2 + 3, PAD_T + 2);
+        }
+        if (yearChanged) lastYear = m.yr;
+        lastMonth = m.mo;
+    });
+
+    /* ══════════════════════════
+       COUCHE 4 — Marqueurs année
+       ══════════════════════════ */
+    lastYear = -1; lastMonth = -1;
+    markers.forEach((m, i) => {
+        if (m.yr !== lastYear) {
+            const lx = m.x - step / 2;
+            ctx.globalAlpha = 0.95;
+            ctx.strokeStyle = yearColor;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 3]);
             ctx.beginPath(); ctx.moveTo(lx, PAD_T); ctx.lineTo(lx, PAD_T + chartH); ctx.stroke();
             ctx.setLineDash([]);
-            // Pill de fond pour lisibilité
-            const yearStr = '' + yr;
-            ctx.font = 'bold ' + LABEL_FONT_SIZE + 'px DM Sans,sans-serif';
+            // Pill fond
+            const yearStr = '' + m.yr;
+            ctx.font = 'bold ' + LABEL_FS + 'px DM Sans,sans-serif';
             const tw = ctx.measureText(yearStr).width;
-            const pillX = lx + 4, pillY = PAD_T + 3;
-            const pillW = tw + 8, pillH = LABEL_FONT_SIZE + 4;
-            ctx.fillStyle = isDark ? '#1a0a2e' : '#f5f0ff';
+            const pX = lx + 4, pY = PAD_T + 3, pW = tw + 10, pH = LABEL_FS + 5;
+            ctx.fillStyle = isDark ? 'rgba(26,10,46,0.92)' : 'rgba(245,240,255,0.92)';
             ctx.beginPath();
-            ctx.roundRect(pillX, pillY, pillW, pillH, 3);
+            ctx.roundRect(pX, pY, pW, pH, 4);
             ctx.fill();
             ctx.fillStyle = yearColor;
             ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-            ctx.fillText(yearStr, pillX + 4, pillY + 2);
-            lastYear = yr;
+            ctx.fillText(yearStr, pX + 5, pY + 3);
+            ctx.globalAlpha = 1;
+            lastYear = m.yr;
         }
+        lastMonth = m.mo;
+    });
 
-        /* ── Marqueur mois (pour intervals day/week, seulement si l'année n'a pas changé) ── */
-        const showMonthMarker = mo !== lastMonth && CHART_BAR_INTERVAL !== 'month' && !yearChanged;
-        if (showMonthMarker) {
-            const lx = x - step / 2;
-            // Ligne pointillée bleue
-            ctx.strokeStyle = monthColor;
-            ctx.lineWidth = 1;
-            ctx.setLineDash([2, 4]);
-            ctx.beginPath(); ctx.moveTo(lx, PAD_T + 18); ctx.lineTo(lx, PAD_T + chartH); ctx.stroke();
-            ctx.setLineDash([]);
-            // Mini label mois en haut de la ligne
-            ctx.fillStyle = monthColor;
-            ctx.font = Math.round(LABEL_FONT_SIZE * 0.85) + 'px DM Sans,sans-serif';
-            ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-            ctx.fillText(MONTH_NAMES_SHORT[mo], lx + 3, PAD_T + 18);
-        }
+    /* ══════════════════════════
+       COUCHE 5 — Courbe temps/jour (rose)
+       ══════════════════════════ */
+    // Zone de remplissage sous la courbe
+    ctx.beginPath();
+    let firstCurve = true;
+    data.forEach((d, i) => {
+        if (d.dailyTime === 0) return;
+        const x = PAD_L + step * i + step / 2;
+        const y = PAD_T + chartH - (d.dailyTime / maxTime) * chartH;
+        if (firstCurve) { ctx.moveTo(x, y); firstCurve = false; }
+        else ctx.lineTo(x, y);
+    });
+    // Fermer pour le fill
+    const lastPt = data.reduce((last, d, i) => d.dailyTime > 0 ? i : last, -1);
+    const firstPt = data.findIndex(d => d.dailyTime > 0);
+    if (firstPt >= 0 && lastPt >= 0) {
+        ctx.lineTo(PAD_L + step * lastPt + step / 2, PAD_T + chartH);
+        ctx.lineTo(PAD_L + step * firstPt + step / 2, PAD_T + chartH);
+        ctx.closePath();
+        ctx.globalAlpha = 0.1;
+        ctx.fillStyle = curveColor;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+    // Trait de la courbe
+    ctx.strokeStyle = curveColor; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    let firstLine = true;
+    data.forEach((d, i) => {
+        if (d.dailyTime === 0) return;
+        const x = PAD_L + step * i + step / 2;
+        const y = PAD_T + chartH - (d.dailyTime / maxTime) * chartH;
+        if (firstLine) { ctx.moveTo(x, y); firstLine = false; } else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    // Points sur la courbe
+    data.forEach((d, i) => {
+        if (d.dailyTime === 0) return;
+        const x = PAD_L + step * i + step / 2;
+        const y = PAD_T + chartH - (d.dailyTime / maxTime) * chartH;
+        ctx.beginPath(); ctx.arc(x, y, 3.5, 0, 2 * Math.PI);
+        ctx.fillStyle = curveColor; ctx.fill();
+        ctx.strokeStyle = isDark ? '#1a0a2e' : '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    });
 
-        /* ── Label abscisse ── */
+    /* ══════════════════════════
+       COUCHE 6 — Ligne moyenne (bleu pointillé)
+       ══════════════════════════ */
+    if (avgDailyTime > 0) {
+        const avgY = PAD_T + chartH - (avgDailyTime / maxTime) * chartH;
+        ctx.strokeStyle = avgColor; ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath(); ctx.moveTo(PAD_L, avgY); ctx.lineTo(W - PAD_R, avgY); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+        // Label "moy." sur la ligne
+        const avgVal = CHART_TIME_UNIT === 'hour' ? avgDailyTime.toFixed(1) : Math.round(avgDailyTime);
+        ctx.fillStyle = avgColor;
+        ctx.font = 'bold ' + Math.round(LABEL_FS * 0.8) + 'px DM Sans,sans-serif';
+        ctx.textAlign = 'right'; ctx.textBaseline = avgY > PAD_T + 14 ? 'bottom' : 'top';
+        const lblY = avgY > PAD_T + 14 ? avgY - 3 : avgY + 3;
+        ctx.fillText('moy. ' + avgVal + ' ' + timeLabel(), W - PAD_R - 4, lblY);
+    }
+
+    /* ══════════════════════════
+       COUCHE 7 — Labels abscisse
+       ══════════════════════════ */
+    const DAY_LETTERS = ['D', 'L', 'M', 'Me', 'J', 'V', 'S'];
+    lastYear = -1; lastMonth = -1;
+    data.forEach((d, i) => {
+        const x  = PAD_L + step * i + step / 2;
+        const yr = d.date.getFullYear();
+        const mo = d.date.getMonth();
+        const dayNum = d.date.getDate();
+        const dow    = d.date.getDay();
+
         let label = '';
         if (CHART_BAR_INTERVAL === 'day') {
-            // Format : "J.12" (lettre du jour + n° du jour)
-            const dl = DAY_LETTERS[dayOfWeek];
-            // Afficher tous les jours si peu, sinon 1 sur N
-            label = dl + '.' + dayNum;
+            label = DAY_LETTERS[dow] + '.' + dayNum;
         } else if (CHART_BAR_INTERVAL === 'week') {
-            // Format : "10 Mar" (début de semaine : jour + mois)
-            if (mo !== lastMonth || i === 0) {
-                label = dayNum + ' ' + MONTH_NAMES_SHORT[mo]; // changement de mois → mois complet
-            } else {
-                label = '' + dayNum; // même mois → juste le numéro
-            }
+            label = (mo !== lastMonth || i === 0) ? dayNum + ' ' + MONTH_NAMES_SHORT[mo] : '' + dayNum;
         } else {
-            // month interval → "Mar", "Avr"…
             label = MONTH_NAMES_SHORT[mo];
         }
 
-        lastMonth = mo;
-
         if (label) {
-            const isMajor = CHART_BAR_INTERVAL === 'week' && label.includes(' ');
-            ctx.fillStyle = isMajor ? (isDark ? '#c8b8e8' : '#2d1f5e') : mutedColor;
-            ctx.font = (isMajor ? 'bold ' : '') + LABEL_FONT_SIZE + 'px DM Sans,sans-serif';
+            const isMajor = label.includes(' ') || CHART_BAR_INTERVAL === 'month';
+            ctx.fillStyle = isMajor ? textColor : mutedColor;
+            ctx.font = (isMajor ? 'bold ' : '') + LABEL_FS + 'px DM Sans,sans-serif';
             ctx.textAlign = 'center'; ctx.textBaseline = 'top';
             ctx.fillText(label, x, PAD_T + chartH + 6);
-            // Petite marque
             ctx.strokeStyle = (isMajor ? monthColor : mutedColor + '55');
             ctx.lineWidth = isMajor ? 1.5 : 1;
             ctx.beginPath(); ctx.moveTo(x, PAD_T + chartH); ctx.lineTo(x, PAD_T + chartH + 5); ctx.stroke();
         }
+        lastMonth = mo; lastYear = yr;
     });
 
-    /* ── Légende basse ── */
+    /* ══════════════════════════
+       Légende basse
+       ══════════════════════════ */
     const ly = H - 10;
+    ctx.globalAlpha = 0.75;
     ctx.fillStyle = barColor;
-    ctx.fillRect(PAD_L, ly - 2, 10, 4);
+    ctx.fillRect(PAD_L, ly - 3, 10, 6);
+    ctx.globalAlpha = 1;
     ctx.fillStyle = mutedColor;
-    ctx.font = Math.round(H * 0.048) + 'px DM Sans,sans-serif';
+    ctx.font = Math.round(H * 0.046) + 'px DM Sans,sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.fillText('Parties', PAD_L + 14, ly);
 
-    ctx.strokeStyle = lineColor; ctx.lineWidth = 2;
+    // Courbe rose
+    ctx.strokeStyle = curveColor; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(PAD_L + 74, ly); ctx.lineTo(PAD_L + 84, ly); ctx.stroke();
+    ctx.beginPath(); ctx.arc(PAD_L + 79, ly, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = curveColor; ctx.fill();
     ctx.fillStyle = mutedColor;
-    ctx.fillText('Moy. ' + timeLabel() + '/jour', PAD_L + 88, ly);
+    ctx.fillText('Temps/jour (' + timeLabel() + ')', PAD_L + 88, ly);
 
-    // Légende marqueurs
-    ctx.fillStyle = yearColor;
-    ctx.fillRect(PAD_L + 160, ly - 3, 3, 6);
+    // Ligne moy
+    ctx.strokeStyle = avgColor; ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(PAD_L + 196, ly - 1); ctx.lineTo(PAD_L + 206, ly - 1); ctx.stroke();
+    ctx.setLineDash([]);
     ctx.fillStyle = mutedColor;
-    ctx.fillText('Année', PAD_L + 168, ly);
+    ctx.fillText('Moyenne', PAD_L + 210, ly);
+
+    // Marqueurs
+    ctx.fillStyle = yearColor;
+    ctx.fillRect(PAD_L + 278, ly - 3, 3, 6);
+    ctx.fillStyle = mutedColor;
+    ctx.fillText('Année', PAD_L + 286, ly);
 
     ctx.fillStyle = monthColor;
-    ctx.fillRect(PAD_L + 218, ly - 3, 3, 6);
-    ctx.fillText('Mois', PAD_L + 226, ly);
+    ctx.fillRect(PAD_L + 334, ly - 3, 3, 6);
+    ctx.fillStyle = mutedColor;
+    ctx.fillText('Mois', PAD_L + 342, ly);
 }
 
 /* ══════════════════════════════════════════

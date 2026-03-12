@@ -105,7 +105,7 @@ function openEditPlayer(idx) {
 function renderEditColors(selected) {
     document.getElementById('editColors').innerHTML = COLORS.map(c =>
         '<button class="color-dot ' + (c === selected ? 'selected' : '') + '" ' +
-        'style="background:' + c + '" onclick="selectEditColor(\'' + c + '\')"></button>'
+        'data-color="' + c + '" style="background:' + c + '" onclick="selectEditColor(\'' + c + '\')"></button>'
     ).join('');
 }
 
@@ -132,7 +132,7 @@ function saveEditPlayer() {
     const selectedColor = document.querySelector('.color-dot.selected');
     const oldColor = p.color;
     p.name = newName;
-    if (selectedColor) p.color = selectedColor.style.background;
+    if (selectedColor) p.color = selectedColor.getAttribute('data-color') || selectedColor.style.background;
 
     // Mettre à jour le nom dans les données de tous les jeux
     if (oldName !== newName) {
