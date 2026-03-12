@@ -397,6 +397,20 @@ document.addEventListener('keydown', function(e) {
 });
 
 
+
+/* ── Entrée clavier ── */
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const editModal = document.getElementById('editModal');
+        if (editModal && editModal.classList.contains('open')) {
+            saveEditPlayer();
+        } else if (document.activeElement === document.getElementById('newRosterName')) {
+            addRosterPlayer();
+        }
+    }
+});
+
+
 /* ── INIT ── */
 renderRoster();
 renderStats();

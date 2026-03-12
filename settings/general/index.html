@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="color:#0d0820" />
+    <title>📊 Stats générales — BoardScore</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../style.css" />
+    <link rel="stylesheet" href="../settings.css" />
+    <link rel="stylesheet" href="general.css" />
+</head>
+<body>
+<div id="app">
+
+    <header>
+        <div class="header-left">
+            <a href="../index.html" class="btn-back">←</a>
+            <div>
+                <div class="header-title">📊 <span>Stats générales</span></div>
+                <div class="header-sub">Vue d'ensemble de toutes les parties</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="section" id="generalStatsSection">
+        <div id="generalStatsList"></div>
+    </div>
+
+</div>
+
+<!-- Top3 detail modal -->
+<div class="modal-overlay" id="top3Modal" onclick="closeTop3ModalBg(event)">
+    <div class="modal">
+        <button class="modal-close-btn" onclick="document.getElementById('top3Modal').classList.remove('open')" aria-label="Fermer">✕</button>
+        <div class="modal-handle"></div>
+        <div class="modal-title">🏆 Détail — Victoires par jeu</div>
+        <div class="modal-sub">Histogramme des victoires pour les meilleurs joueurs</div>
+        <div id="top3Content"></div>
+    </div>
+</div>
+
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Changer de thème">🌙</button>
+
+<script src="general.js"></script>
+</body>
+</html>

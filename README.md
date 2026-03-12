@@ -1,6 +1,9 @@
 - Système de statistiques par joueur - **FAIT**
+- Stats générale - **90%**
+  - On voit pas le changement de mois
+  - Ajouter la ligne courbée du temps passé sur l'appli par jours en plus du temps moyen, abscisse de droite aussi mais d'une autre couleur
 - Classement global - **FAIT**
-- Informations sur l'application depuis le menu
+- Informations sur l'application depuis le menu - **FAIT**
 - Récap de soirée
 - Message explicite "Reprendre la partie en cours ?" au lancement si on quitte la partie en cours de route
 - QR code que les joueurs peuvent scanner pour voir les scores en temps réel
