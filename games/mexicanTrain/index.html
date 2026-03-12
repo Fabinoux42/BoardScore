@@ -81,7 +81,19 @@
         <div class="modal-handle"></div>
         <div class="modal-title">Saisir les points</div>
         <div class="modal-sub" id="modalSub">Entrez les points de cette manche pour chaque joueur</div>
-        <div class="score-inputs" id="scoreInputs"></div>
+
+        <!-- Sélecteur du gagnant -->
+        <div class="finisher-section">
+            <div class="finisher-label">🏆 Qui a gagné la manche ?</div>
+            <div class="finisher-list" id="winnerList"></div>
+        </div>
+
+        <div class="modal-block">
+            <div id="winnerRequiredHint" style="display:none;margin-bottom:10px;background:rgba(255,85,85,0.12);border:1px solid rgba(255,85,85,0.35);border-radius:10px;padding:8px 12px;font-size:0.78rem;color:var(--red);text-align:center;">
+                ⚠️ Sélectionne qui a gagné la manche avant de confirmer !
+            </div>
+            <div class="score-inputs" id="scoreInputs"></div>
+        </div>
         <button class="modal-confirm" onclick="confirmScores()">✅ Confirmer les scores</button>
     </div>
 </div>

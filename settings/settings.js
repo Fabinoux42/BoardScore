@@ -130,12 +130,18 @@ function saveEditPlayer() {
 
     const oldName = p.name;
     const selectedColor = document.querySelector('.color-dot.selected');
+    const oldColor = p.color;
     p.name = newName;
     if (selectedColor) p.color = selectedColor.style.background;
 
     // Mettre à jour le nom dans les données de tous les jeux
     if (oldName !== newName) {
         updatePlayerNameInGames(oldName, newName);
+    }
+
+    // Mettre à jour la couleur dans les parties en cours
+    if (selectedColor && p.color !== oldColor) {
+        updatePlayerColorInGames(p.name, p.color);
     }
 
     saveRoster(roster);
@@ -207,6 +213,24 @@ function updatePlayerNameInGames(oldName, newName) {
     });
 }
 
+/* ── Propager un changement de couleur dans les données de jeu ── */
+function updatePlayerColorInGames(name, newColor) {
+    const gameKeys = ['mxt', 'skyjo', 'rami', 'uno', 'yams'];
+    gameKeys.forEach(key => {
+        try {
+            const raw = localStorage.getItem(key + '_state');
+            if (!raw) return;
+            let state = JSON.parse(raw);
+            let changed = false;
+            if (state.players) {
+                state.players.forEach(p => {
+                    if (p.name === name) { p.color = newColor; changed = true; }
+                });
+            }
+            if (changed) localStorage.setItem(key + '_state', JSON.stringify(state));
+        } catch (e) {}
+    });
+}
 
 /* ═══════════════════════════════════════════
    STATISTIQUES — basées sur l'historique des fins de partie
