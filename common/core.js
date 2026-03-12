@@ -53,6 +53,13 @@ const BoardScore = (() => {
 
 
     /* ═══════════════════════════════════════════
+       MATCH HISTORY — enregistre chaque fin de partie
+       Stocké dans localStorage sous "boardscore_matches"
+       (La fonction trackMatchResult est dans create() car elle utilise config.key)
+       ═══════════════════════════════════════════ */
+
+
+    /* ═══════════════════════════════════════════
        create(config)  —  Factory principale
        ═══════════════════════════════════════════ */
     function create(config) {
@@ -84,6 +91,20 @@ const BoardScore = (() => {
                     state = { ...state, ...parsed };
                 }
             } catch(e) {}
+        }
+
+        /* ── Match tracking ── */
+        function trackMatchResult(sorted, winner) {
+            try {
+                const matches = JSON.parse(localStorage.getItem('boardscore_matches')) || [];
+                matches.push({
+                    game: config.key,
+                    date: Date.now(),
+                    winner: winner.name,
+                    players: sorted.map(p => ({ name: p.name, score: p.score })),
+                });
+                localStorage.setItem('boardscore_matches', JSON.stringify(matches));
+            } catch (e) {}
         }
 
         /* ── Players ── */
@@ -301,10 +322,13 @@ const BoardScore = (() => {
         /* ── Winner Screen ── */
         function showWinner() {
             const sortFn = config.highestWins
-                ? (a, b) => b.score - a.score   // plus haut = meilleur (Yam's)
-                : (a, b) => a.score - b.score;  // plus bas = meilleur (défaut)
+                ? (a, b) => b.score - a.score
+                : (a, b) => a.score - b.score;
             const sorted = [...state.players].sort(sortFn);
             const winner = sorted[0];
+
+            // Enregistrer la fin de partie dans l'historique global
+            trackMatchResult(sorted, winner);
 
             const nameEl = $('winnerName');
             const scoreEl = $('winnerScore');

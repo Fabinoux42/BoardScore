@@ -209,8 +209,21 @@ function updatePlayerNameInGames(oldName, newName) {
 
 
 /* ═══════════════════════════════════════════
-   STATISTIQUES — calculées depuis les données de jeu
+   STATISTIQUES — basées sur l'historique des fins de partie
    ═══════════════════════════════════════════ */
+
+const GAME_NAMES = {
+    mxt: { name: 'Train Mexicain', emoji: '🚂' },
+    skyjo: { name: 'Skyjo', emoji: '🃏' },
+    rami: { name: 'Rami', emoji: '🃏' },
+    uno: { name: 'Uno', emoji: '🎴' },
+    yams: { name: "Yam's", emoji: '🎲' },
+};
+
+function getMatches() {
+    try { return JSON.parse(localStorage.getItem('boardscore_matches')) || []; }
+    catch (e) { return []; }
+}
 
 function renderStats() {
     const roster = getRoster();
@@ -222,57 +235,43 @@ function renderStats() {
         return;
     }
 
-    // Collecter les stats de tous les jeux
-    const gameConfigs = [
-        { key: 'mxt',   name: 'Train Mexicain', emoji: '🚂', lowestWins: true },
-        { key: 'skyjo', name: 'Skyjo',          emoji: '🃏', lowestWins: true },
-        { key: 'rami',  name: 'Rami',           emoji: '🃏', lowestWins: true },
-        { key: 'uno',   name: 'Uno',            emoji: '🎴', lowestWins: true },
-        { key: 'yams',  name: "Yam's",          emoji: '🎲', lowestWins: false },
-    ];
+    const matches = getMatches();
 
-    // Pour chaque joueur, calculer ses stats
     const playerStats = roster.map(p => {
-        const stats = { name: p.name, color: p.color, games: 0, wins: 0, totalScore: 0, bestGame: null };
+        const stats = { name: p.name, color: p.color, games: 0, wins: 0, byGame: {} };
 
-        gameConfigs.forEach(gc => {
-            try {
-                const raw = localStorage.getItem(gc.key + '_state');
-                if (!raw) return;
-                const state = JSON.parse(raw);
-                if (!state.players) return;
+        matches.forEach(m => {
+            const entry = m.players.find(pl => pl.name === p.name);
+            if (!entry) return;
 
-                const player = state.players.find(pl => pl.name === p.name);
-                if (!player) return;
+            stats.games++;
+            if (m.winner === p.name) stats.wins++;
 
-                // Ne compter que si au moins une manche a été jouée
-                if (!state.history || state.history.length === 0) return;
-
-                // Ce joueur est dans cette partie
-                stats.games++;
-                stats.totalScore += player.score;
-
-                // Déterminer si le joueur a gagné (seulement si des scores > 0 existent)
-                const scores = state.players.map(pl => pl.score);
-                const hasRealScores = scores.some(s => s !== 0);
-                if (hasRealScores) {
-                    const winScore = gc.lowestWins ? Math.min(...scores) : Math.max(...scores);
-                    if (player.score === winScore) stats.wins++;
-                }
-
-                // Meilleur score
-                if (!stats.bestGame || (gc.lowestWins ? player.score < stats.bestGame.score : player.score > stats.bestGame.score)) {
-                    stats.bestGame = { game: gc.name, emoji: gc.emoji, score: player.score };
-                }
-            } catch (e) {}
+            const gk = m.game;
+            if (!stats.byGame[gk]) stats.byGame[gk] = { games: 0, wins: 0, totalScore: 0, best: null };
+            const bg = stats.byGame[gk];
+            bg.games++;
+            if (m.winner === p.name) bg.wins++;
+            bg.totalScore += entry.score;
+            if (bg.best === null || entry.score > bg.best) bg.best = entry.score;
         });
 
         return stats;
     });
 
-    list.innerHTML = playerStats.map(s => {
-        const avgScore = s.games > 0 ? Math.round(s.totalScore / s.games) : 0;
+    list.innerHTML = playerStats.map((s, idx) => {
         const winRate = s.games > 0 ? Math.round((s.wins / s.games) * 100) : 0;
+
+        // Trouver le meilleur score tous jeux confondus
+        let bestText = '';
+        let bestScore = null;
+        Object.entries(s.byGame).forEach(([gk, bg]) => {
+            if (bg.best !== null && (bestScore === null || bg.best > bestScore)) {
+                bestScore = bg.best;
+                const gInfo = GAME_NAMES[gk] || { name: gk, emoji: '🎮' };
+                bestText = gInfo.emoji + ' ' + bg.best + ' pts (' + gInfo.name + ')';
+            }
+        });
 
         return '<div class="stat-card">' +
             '<div class="stat-header">' +
@@ -292,14 +291,72 @@ function renderStats() {
             '<div class="stat-value">' + winRate + '%</div>' +
             '<div class="stat-label">Win rate</div>' +
             '</div>' +
-            '<div class="stat-item">' +
-            '<div class="stat-value">' + avgScore + '</div>' +
-            '<div class="stat-label">Moy. pts</div>' +
             '</div>' +
-            '</div>' +
-            (s.bestGame ? '<div class="stat-best">' + s.bestGame.emoji + ' Meilleur : ' + s.bestGame.score + ' pts (' + s.bestGame.game + ')</div>' : '') +
+            (bestText
+                ? '<div class="stat-best-row">' +
+                '<span class="stat-best-text">Meilleur : ' + bestText + '</span>' +
+                '<button class="stat-detail-btn" onclick="openStatDetail(' + idx + ')">ℹ️</button>' +
+                '</div>'
+                : '<div class="stat-best-row"><span class="stat-best-text">Aucune partie terminée</span></div>') +
             '</div>';
     }).join('');
+}
+
+
+/* ── Modale détail stats par jeu ── */
+function openStatDetail(idx) {
+    const roster = getRoster();
+    const matches = getMatches();
+    const p = roster[idx];
+    if (!p) return;
+
+    // Calculer les stats par jeu
+    const byGame = {};
+    matches.forEach(m => {
+        const entry = m.players.find(pl => pl.name === p.name);
+        if (!entry) return;
+        const gk = m.game;
+        if (!byGame[gk]) byGame[gk] = { games: 0, wins: 0, totalScore: 0, best: null, worst: null };
+        const bg = byGame[gk];
+        bg.games++;
+        if (m.winner === p.name) bg.wins++;
+        bg.totalScore += entry.score;
+        if (bg.best === null || entry.score > bg.best) bg.best = entry.score;
+        if (bg.worst === null || entry.score < bg.worst) bg.worst = entry.score;
+    });
+
+    let html = '';
+    Object.entries(byGame).forEach(([gk, bg]) => {
+        const gInfo = GAME_NAMES[gk] || { name: gk, emoji: '🎮' };
+        const avg = bg.games > 0 ? Math.round(bg.totalScore / bg.games) : 0;
+        const wr = bg.games > 0 ? Math.round((bg.wins / bg.games) * 100) : 0;
+
+        html += '<div class="sd-game">' +
+            '<div class="sd-game-header">' + gInfo.emoji + ' ' + gInfo.name + '</div>' +
+            '<div class="sd-grid">' +
+            '<div class="sd-item"><span class="sd-val">' + bg.games + '</span><span class="sd-lbl">Parties</span></div>' +
+            '<div class="sd-item"><span class="sd-val win">' + bg.wins + '</span><span class="sd-lbl">Victoires</span></div>' +
+            '<div class="sd-item"><span class="sd-val">' + wr + '%</span><span class="sd-lbl">Win rate</span></div>' +
+            '<div class="sd-item"><span class="sd-val">' + avg + '</span><span class="sd-lbl">Moy. pts</span></div>' +
+            '</div>' +
+            '<div class="sd-scores">' +
+            '<span>Meilleur : <strong>' + bg.best + '</strong></span>' +
+            '<span>Pire : <strong>' + bg.worst + '</strong></span>' +
+            '</div>' +
+            '</div>';
+    });
+
+    if (!html) html = '<div class="roster-empty">Aucune partie terminée pour ce joueur.</div>';
+
+    document.getElementById('detailPlayerName').textContent = p.name;
+    document.getElementById('detailContent').innerHTML = html;
+    document.getElementById('detailModal').classList.add('open');
+}
+
+function closeDetailModal(e) {
+    if (e.target === document.getElementById('detailModal')) {
+        document.getElementById('detailModal').classList.remove('open');
+    }
 }
 
 

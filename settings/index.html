@@ -67,6 +67,16 @@
     </div>
 </div>
 
+<!-- Detail stats modal -->
+<div class="modal-overlay" id="detailModal" onclick="closeDetailModal(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">📊 Détails — <span id="detailPlayerName"></span></div>
+        <div class="modal-sub">Stats détaillées par jeu</div>
+        <div id="detailContent"></div>
+    </div>
+</div>
+
 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Changer de thème">🌙</button>
 
 <script src="settings.js"></script>
