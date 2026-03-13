@@ -659,7 +659,7 @@ function drawPlayerBarChart(matches) {
    HISTOGRAMME TIMELINE
    ══════════════════════════════════════════ */
 function drawTimelineChart(matches) {
-    const MIN_BAR_STEP = 50;
+    const MIN_BAR_STEP = 28;
     const wrap   = document.querySelector('.timeline-scroll-wrap');
     const canvas = document.getElementById('timelineChart');
     if (!canvas || !wrap) return;
@@ -733,7 +733,7 @@ function drawTimelineChart(matches) {
     const gSteps   = niceSteps(maxGames);
     const tSteps   = niceSteps(Math.ceil(maxTime));
     const step     = chartW / Math.max(n, 1);
-    const barW     = Math.max(6, Math.min(32, step * 0.65));
+    const barW     = Math.max(5, Math.min(28, step * 0.60));
     const LFS      = Math.round(H * 0.05);  // label font size
     const DAY_LTR  = ['D', 'L', 'M', 'Me', 'J', 'V', 'S'];
 
