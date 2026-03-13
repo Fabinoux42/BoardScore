@@ -156,8 +156,7 @@ function closeEditModal(e) {
 
 /* ── Propager un changement de nom dans les données de jeu ── */
 function updatePlayerNameInGames(oldName, newName) {
-    const gameKeys = ['mxt', 'skyjo', 'rami', 'uno', 'yams'];
-    gameKeys.forEach(key => {
+    window.GAME_KEYS.forEach(key => {
         try {
             const raw = localStorage.getItem(key + '_state');
             if (!raw) return;
@@ -200,8 +199,7 @@ function updatePlayerNameInGames(oldName, newName) {
 
 /* ── Propager un changement de couleur dans les données de jeu ── */
 function updatePlayerColorInGames(name, newColor) {
-    const gameKeys = ['mxt', 'skyjo', 'rami', 'uno', 'yams'];
-    gameKeys.forEach(key => {
+    window.GAME_KEYS.forEach(key => {
         try {
             const raw = localStorage.getItem(key + '_state');
             if (!raw) return;
@@ -221,13 +219,8 @@ function updatePlayerColorInGames(name, newColor) {
    STATISTIQUES — basées sur l'historique des fins de partie
    ═══════════════════════════════════════════ */
 
-const GAME_NAMES = {
-    mxt: { name: 'Train Mexicain', emoji: '🚂' },
-    skyjo: { name: 'Skyjo', emoji: '🃏' },
-    rami: { name: 'Rami', emoji: '🃏' },
-    uno: { name: 'Uno', emoji: '🎴' },
-    yams: { name: "Yam's", emoji: '🎲' },
-};
+// GAME_NAMES → window.GAME_NAMES  (games-registry.js)
+const GAME_NAMES = window.GAME_NAMES;
 
 // getMatches → BS.getMatches  (utils.js)
 
@@ -401,16 +394,13 @@ renderStats();
    EXPORT / IMPORT
    ═══════════════════════════════════════════ */
 
+// EXPORT_KEYS : clés système + toutes les _state depuis le registre
 const EXPORT_KEYS = [
     'boardscore_players',
     'boardscore_matches',
     'boardscore_time',
     'boardscore_theme',
-    'mxt_state',
-    'skyjo_state',
-    'rami_state',
-    'uno_state',
-    'yams_state',
+    ...window.GAME_KEYS.map(k => k + '_state'),
 ];
 
 /* ── Export ── */

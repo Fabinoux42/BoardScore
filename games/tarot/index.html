@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#1a0a2e" />
+    <title>🃏 Tarot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../style.css" />
+    <link rel="stylesheet" href="../../common/game.css" />
+    <link rel="stylesheet" href="tarot.css" />
+</head>
+<body>
+<div id="app">
+
+    <header>
+        <div class="header-left">
+            <a href="../../index.html" class="btn-back">←</a>
+            <div>
+                <div class="header-title">🃏 <span>Tarot</span></div>
+                <div class="header-sub">Compteur de points</div>
+            </div>
+        </div>
+        <div class="round-badge" id="roundBadge">⏳ Donne 1</div>
+    </header>
+
+    <!-- Bandeau donneur -->
+    <div class="dealer-bar" id="dealerBar" style="display:none">
+        <div class="dealer-current-line">
+            <span class="dealer-icon">🃏</span>
+            <span class="dealer-pill" id="dealerCurrentPill"></span>
+            <span class="dealer-label-txt">distribue les cartes</span>
+        </div>
+        <div class="dealer-next-line">
+            <span class="dealer-next-label">Prochain :</span>
+            <span class="dealer-next-name" id="dealerNextName">—</span>
+        </div>
+    </div>
+
+    <div class="section" style="margin-top:16px;">
+        <div class="section-title">Joueurs</div>
+        <div class="players-list" id="playersList"></div>
+    </div>
+
+    <div class="section" style="margin-top:16px;">
+        <div class="section-title">Ajouter un joueur</div>
+        <div class="add-player-form">
+            <input type="text" id="newPlayerName" placeholder="Nom du joueur…" maxlength="20" />
+            <button class="btn-add" onclick="addPlayer()">+ Ajouter</button>
+        </div>
+    </div>
+
+    <!-- Aide-mémoire -->
+    <div class="section" style="margin-top:18px;">
+        <div class="section-title">Aide-mémoire</div>
+        <div class="scoring-help">
+
+            <div class="sh-two-cols">
+                <!-- Valeur des cartes -->
+                <div class="sh-col">
+                    <div class="scoring-help-title">🃏 Valeur des cartes</div>
+                    <div class="scoring-help-grid">
+                        <span class="sh-card sh-bout">Excuse / Petit / 21</span>
+                        <span class="sh-pts sh-bout">4,5 pts</span>
+                        <div class="sh-divider"></div>
+                        <span class="sh-card">Roi</span>
+                        <span class="sh-pts">4,5 pts</span>
+                        <div class="sh-divider"></div>
+                        <span class="sh-card">Dame</span>
+                        <span class="sh-pts">3,5 pts</span>
+                        <div class="sh-divider"></div>
+                        <span class="sh-card">Cavalier</span>
+                        <span class="sh-pts">2,5 pts</span>
+                        <div class="sh-divider"></div>
+                        <span class="sh-card">Valet</span>
+                        <span class="sh-pts">1,5 pts</span>
+                        <div class="sh-divider"></div>
+                        <span class="sh-card">Petite carte</span>
+                        <span class="sh-pts">0,5 pt</span>
+                    </div>
+                    <div class="sh-note">Compter par paires • Total : 91 pts</div>
+                </div>
+
+                <!-- Seuils -->
+                <div class="sh-col">
+                    <div class="scoring-help-title">🎯 Seuils</div>
+                    <div class="scoring-help-grid">
+                        <span class="sh-card sh-bout">3 bouts</span>
+                        <span class="sh-pts sh-bout">≥ 36 pts</span>
+                        <div class="sh-divider"></div>
+                        <span class="sh-card sh-bout">2 bouts</span>
+                        <span class="sh-pts sh-bout">≥ 41 pts</span>
+                        <div class="sh-divider"></div>
+                        <span class="sh-card">1 bout</span>
+                        <span class="sh-pts">≥ 51 pts</span>
+                        <div class="sh-divider"></div>
+                        <span class="sh-card">0 bout</span>
+                        <span class="sh-pts">≥ 56 pts</span>
+                    </div>
+                    <div class="sh-note">Bouts : Excuse, Petit, 21</div>
+                </div>
+            </div>
+
+            <!-- Contrats -->
+            <div class="sh-contrats">
+                <div class="scoring-help-title" style="margin-top:10px">📢 Contrats</div>
+                <div class="sh-mult-row">
+                    <div class="sh-mult-item"><span class="sh-mult-label">Petite</span><span class="sh-mult-val">×1</span></div>
+                    <div class="sh-mult-item"><span class="sh-mult-label">Garde</span><span class="sh-mult-val">×2</span></div>
+                    <div class="sh-mult-item"><span class="sh-mult-label">G. sans</span><span class="sh-mult-val">×4</span></div>
+                    <div class="sh-mult-item"><span class="sh-mult-label">G. contre</span><span class="sh-mult-val">×6</span></div>
+                </div>
+            </div>
+
+            <!-- Primes -->
+            <div class="sh-contrats">
+                <div class="scoring-help-title" style="margin-top:8px">🌟 Primes</div>
+                <div class="sh-primes-grid">
+                    <span class="sh-card">Petit au bout</span><span class="sh-pts">±10 × contrat / joueur</span>
+                    <div class="sh-divider"></div>
+                    <span class="sh-card">Poignée (10 / 13 / 15 atouts)</span><span class="sh-pts">±20 / 30 / 40 / j.</span>
+                    <div class="sh-divider"></div>
+                    <span class="sh-card">Chelem annoncé ✅</span><span class="sh-pts">+400 / j.</span>
+                    <div class="sh-divider"></div>
+                    <span class="sh-card">Chelem non annoncé ✅</span><span class="sh-pts">+200 / j.</span>
+                    <div class="sh-divider"></div>
+                    <span class="sh-card">Chelem annoncé ❌</span><span class="sh-pts">−200 / j.</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="section" style="margin-top:18px;" id="historySection">
+        <div class="section-title">Historique des donnes</div>
+        <div class="history-list" id="historyList"></div>
+    </div>
+
+    <div class="card-deco">♠ ♥ ♦ ♣</div>
+
+</div><!-- /#app -->
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+    <button class="btn-main btn-score"   onclick="openScoreModal()">✏️ Saisir</button>
+    <button class="btn-main btn-next"    onclick="nextRound()">▶ Suivante</button>
+    <button class="btn-main btn-end"     onclick="endGame()">🏆 Terminer</button>
+    <button class="btn-main btn-restart" onclick="openNewGameModal()">↺ Rejouer</button>
+</div>
+
+<!-- Score Modal -->
+<div class="modal-overlay" id="scoreModal" onclick="closeBgModal(event,'scoreModal')">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🃏 Saisir la donne</div>
+        <div class="modal-sub" id="modalSub"></div>
+        <div id="scoreForm"></div>
+        <div id="scoreFormHint" class="score-form-hint" style="display:none"></div>
+        <button class="modal-confirm" onclick="confirmScores()">✅ Confirmer la donne</button>
+    </div>
+</div>
+
+<!-- New Game Modal -->
+<div class="modal-overlay" id="newGameModal" onclick="closeBgModal(event,'newGameModal')">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🃏 Nouvelle partie</div>
+        <div class="modal-sub">Configure ta prochaine partie</div>
+
+        <div class="newgame-section">
+            <div class="newgame-section-title">Joueurs</div>
+            <div class="choice-cards">
+                <div class="choice-card selected" id="cc-same" onclick="selectPlayerMode('same')">
+                    <div class="cc-icon">👥</div>
+                    <div class="cc-title">Mêmes joueurs</div>
+                    <div class="cc-sub">Remettre les scores à zéro</div>
+                </div>
+                <div class="choice-card" id="cc-new" onclick="selectPlayerMode('new')">
+                    <div class="cc-icon">✨</div>
+                    <div class="cc-title">Nouveaux joueurs</div>
+                    <div class="cc-sub">Repartir de zéro</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="newgame-section" id="ng-keep-section">
+            <div class="newgame-section-title">Joueurs à garder</div>
+            <div class="keep-players-list" id="ngKeepList"></div>
+        </div>
+
+        <div class="newgame-section" id="ng-new-section" style="display:none">
+            <div class="newgame-section-title">Nouveaux joueurs</div>
+            <div class="new-players-list" id="ngNewList"></div>
+            <div class="add-newplayer-form">
+                <input type="text" id="ngNewPlayerInput" placeholder="Nom du joueur…" maxlength="20" />
+                <button class="btn-add-sm" onclick="ngAddPlayer()">+ Ajouter</button>
+            </div>
+        </div>
+
+        <div class="newgame-section" id="ng-dealer-section"></div>
+
+        <div class="newgame-section" id="ng-limit-section"></div>
+
+        <button class="newgame-confirm" onclick="confirmNewGame()">🃏 Lancer la partie !</button>
+        <button class="newgame-cancel"  onclick="closeNewGameModal()">Annuler</button>
+    </div>
+</div>
+
+<!-- Winner screen -->
+<div class="winner-overlay" id="winnerScreen">
+    <div class="winner-trophy">🏆</div>
+    <div class="winner-title">Victoire !</div>
+    <div class="winner-name"  id="winnerName"></div>
+    <div class="winner-score" id="winnerScore"></div>
+    <div class="winner-podium" id="winnerPodium"></div>
+    <button class="btn-winner-main" onclick="openNewGameFromWinner()">🃏 Nouvelle partie</button>
+</div>
+
+<script src="../../common/time-tracker.js"></script>
+<script src="../../common/core.js"></script>
+<script src="tarot.js"></script>
+</body>
+</html>
