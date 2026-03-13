@@ -133,6 +133,12 @@ const game = BoardScore.create({
     onConfirmNewGame(state) {
         state.dealerIdx = ngDealerIdx;
         state.scoreLimit = ngScoreLimit;
+    },
+
+    /* ── Fin de partie : un joueur dépasse scoreLimit ── */
+    checkGameEnd(state) {
+        if (!state.scoreLimit) return false;
+        return state.players.some(p => p.score >= state.scoreLimit);
     }
 });
 
