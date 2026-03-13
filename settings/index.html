@@ -55,6 +55,31 @@
         <div id="statsList" class="stats-list"></div>
     </div>
 
+    <!-- Section : Export / Import -->
+    <div class="section">
+        <div class="section-title">📤 Export / Import</div>
+        <div class="section-sub">Transfère tes données vers un autre appareil</div>
+        <div class="transfer-card">
+            <div class="transfer-row">
+                <div class="transfer-info">
+                    <div class="transfer-label">Exporter</div>
+                    <div class="transfer-desc">Génère un fichier .json avec tous tes joueurs, stats et parties en cours</div>
+                </div>
+                <button class="transfer-btn export-btn" onclick="exportData()">📥 Exporter</button>
+            </div>
+            <div class="transfer-divider"></div>
+            <div class="transfer-row">
+                <div class="transfer-info">
+                    <div class="transfer-label">Importer</div>
+                    <div class="transfer-desc">Charge un fichier exporté — remplace toutes les données actuelles</div>
+                </div>
+                <button class="transfer-btn import-btn" onclick="openImportModal()">📤 Importer</button>
+            </div>
+        </div>
+        <!-- Input file caché, déclenché par JS -->
+        <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(event)" />
+    </div>
+
     <div class="section info-section">
         <div class="section-title">ℹ️ À propos</div>
         <div class="about-text">
@@ -86,6 +111,31 @@
         <div class="modal-title">📊 Détails — <span id="detailPlayerName"></span></div>
         <div class="modal-sub">Stats détaillées par jeu</div>
         <div id="detailContent"></div>
+    </div>
+</div>
+
+<!-- Import confirmation modal -->
+<div class="modal-overlay" id="importModal" onclick="closeImportModal(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">📤 Importer des données</div>
+        <div class="modal-sub">Cette action est irréversible</div>
+        <div class="import-warning">
+            <div class="import-warning-icon">⚠️</div>
+            <div class="import-warning-text">
+                Toutes tes données actuelles (joueurs, statistiques, parties en cours, temps de jeu) seront <strong>définitivement remplacées</strong> par celles du fichier importé.
+            </div>
+        </div>
+        <button class="modal-confirm" onclick="triggerFileInput()">📂 Choisir un fichier et importer</button>
+        <button class="edit-delete" style="margin-top:8px" onclick="document.getElementById('importModal').classList.remove('open')">Annuler</button>
+    </div>
+</div>
+
+<!-- Loading overlay (export) -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <div class="loading-label" id="loadingLabel">Export en cours…</div>
     </div>
 </div>
 
