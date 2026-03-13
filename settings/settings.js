@@ -414,3 +414,134 @@ document.addEventListener('keydown', function(e) {
 /* ── INIT ── */
 renderRoster();
 renderStats();
+
+/* ═══════════════════════════════════════════
+   EXPORT / IMPORT
+   ═══════════════════════════════════════════ */
+
+const EXPORT_KEYS = [
+    'boardscore_players',
+    'boardscore_matches',
+    'boardscore_time',
+    'boardscore_theme',
+    'mxt_state',
+    'skyjo_state',
+    'rami_state',
+    'uno_state',
+    'yams_state',
+];
+
+/* ── Export ── */
+function exportData() {
+    showLoading('Export en cours…');
+
+    // Légère temporisation pour laisser le spinner s'afficher
+    setTimeout(function () {
+        try {
+            const payload = {
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                data: {},
+            };
+            EXPORT_KEYS.forEach(function (key) {
+                const val = localStorage.getItem(key);
+                if (val !== null) payload.data[key] = val; // stocker la chaîne brute
+            });
+
+            const json = JSON.stringify(payload, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+
+            const date = new Date().toISOString().slice(0, 10);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'boardscore-' + date + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            // Libérer l'URL après un court délai
+            setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+
+        } catch (e) {
+            alert('Erreur lors de l\'export : ' + e.message);
+        } finally {
+            hideLoading();
+        }
+    }, 200);
+}
+
+/* ── Ouvrir modale de confirmation d'import ── */
+function openImportModal() {
+    document.getElementById('importModal').classList.add('open');
+}
+function closeImportModal(e) {
+    if (e.target === document.getElementById('importModal')) {
+        document.getElementById('importModal').classList.remove('open');
+    }
+}
+
+/* ── Déclencher l'input file après confirmation ── */
+function triggerFileInput() {
+    document.getElementById('importModal').classList.remove('open');
+    // Court délai pour laisser la modale se fermer proprement
+    setTimeout(function () {
+        document.getElementById('importFileInput').click();
+    }, 200);
+}
+
+/* ── Traiter le fichier importé ── */
+function handleImportFile(event) {
+    const file = event.target.files[0];
+    // Réinitialiser l'input pour permettre re-sélection du même fichier
+    event.target.value = '';
+    if (!file) return;
+
+    showLoading('Import en cours…');
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const payload = JSON.parse(e.target.result);
+
+            // Validation minimale
+            if (!payload || !payload.data || typeof payload.data !== 'object') {
+                throw new Error('Fichier invalide ou corrompu.');
+            }
+
+            // Écraser les données
+            EXPORT_KEYS.forEach(function (key) {
+                if (payload.data[key] !== undefined) {
+                    localStorage.setItem(key, payload.data[key]);
+                } else {
+                    localStorage.removeItem(key); // clé absente → on efface
+                }
+            });
+
+            hideLoading();
+            // Recharger pour refléter les nouvelles données
+            window.location.reload();
+
+        } catch (err) {
+            hideLoading();
+            alert('Erreur à l\'import : ' + err.message);
+        }
+    };
+    reader.onerror = function () {
+        hideLoading();
+        alert('Impossible de lire le fichier.');
+    };
+    reader.readAsText(file);
+}
+
+/* ── Spinner ── */
+function showLoading(label) {
+    const overlay = document.getElementById('loadingOverlay');
+    const lbl     = document.getElementById('loadingLabel');
+    if (lbl) lbl.textContent = label || '…';
+    if (overlay) overlay.classList.add('visible');
+}
+function hideLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.classList.remove('visible');
+}
