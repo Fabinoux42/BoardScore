@@ -644,6 +644,9 @@ const BoardScore = (() => {
             setTimeout(() => {
                 if (isFirstVisit) {
                     openNewGameModal('new');
+                } else if (config.checkGameEnd && config.checkGameEnd(state)) {
+                    // Partie déjà terminée → directement "rejouer avec mêmes joueurs"
+                    openNewGameModal('same');
                 } else if (isGameInProgress()) {
                     showResumeModal();
                 }
