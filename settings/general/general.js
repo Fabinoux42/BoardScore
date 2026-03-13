@@ -7,9 +7,7 @@
    CONSTANTES — modifiables facilement
    ────────────────────────────────────────── */
 const CHART_BAR_INTERVAL  = 'day';     // regroupement timeline : 'day' | 'week' | 'month'
-const CHART_X_AXIS_UNIT   = 'month';   // labels abscisse       : 'week' | 'month'
 const CHART_TIME_UNIT     = 'minute';  // unité de temps        : 'minute' | 'hour'
-const GAME_DURATION_MIN   = { mxt: 60, skyjo: 30, rami: 45, uno: 20, yams: 40 };
 
 /* ────────────────────────────────── */
 
@@ -56,6 +54,14 @@ function getMatches() {
 function getRoster() {
     try { return JSON.parse(localStorage.getItem('boardscore_players')) || []; }
     catch (e) { return []; }
+}
+function getTimeData() {
+    try { return JSON.parse(localStorage.getItem('boardscore_time')) || {}; }
+    catch (e) { return {}; }
+}
+function dateKeyFromTs(ts) {
+    const d = new Date(ts);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 function getInitial(name) { return name.charAt(0).toUpperCase(); }
 
@@ -668,13 +674,18 @@ function drawTimelineChart(matches) {
     const curveColor = '#fb7185';   // temps/jour  → rose
     const avgColor   = '#38bdf8';   // moyenne     → bleu pointillé
 
-    /* ── Agréger par jour ── */
+    /* ── Agréger par intervalle — temps RÉEL depuis boardscore_time ── */
+    const _timeData = getTimeData();   // { 'YYYY-MM-DD': secondes }
     const intervalMap = {};
     matches.forEach(m => {
         const key = getIntervalKey(m.date);
-        if (!intervalMap[key]) intervalMap[key] = { games: 0, minutes: 0 };
+        if (!intervalMap[key]) intervalMap[key] = { games: 0, seconds: 0, dateCovered: new Set() };
         intervalMap[key].games++;
-        intervalMap[key].minutes += GAME_DURATION_MIN[m.game] || 30;
+        intervalMap[key].dateCovered.add(dateKeyFromTs(m.date));
+    });
+    // Sommer le temps réel pour chaque date couverte
+    Object.values(intervalMap).forEach(iv => {
+        iv.dateCovered.forEach(dk => { iv.seconds += (_timeData[dk] || 0); });
     });
 
     const keys = Object.keys(intervalMap).map(Number).sort((a, b) => a - b);
@@ -691,8 +702,10 @@ function drawTimelineChart(matches) {
 
     const data = allKeys.map(k => {
         const iv = intervalMap[k];
-        // dailyTime = temps total de cet intervalle (pour 'day' : temps de la journée)
-        const dailyTime = iv ? convertTime(iv.minutes) : 0;
+        const rawSec = iv ? iv.seconds : 0;
+        const dailyTime = rawSec > 0
+            ? (CHART_TIME_UNIT === 'hour' ? +(rawSec / 3600).toFixed(1) : Math.round(rawSec / 60))
+            : 0;
         return { key: k, date: new Date(k), games: iv ? iv.games : 0, dailyTime };
     });
 
