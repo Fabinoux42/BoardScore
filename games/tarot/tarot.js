@@ -131,9 +131,19 @@ const game = BoardScore.create({
         return '<div class="history-item">' + header + scores + '</div>';
     },
 
-    /* ── Rendu spécifique : bandeau donneur ── */
+    /* ── Rendu spécifique : bandeau donneur + limite 5 joueurs ── */
     onRender(state) {
         renderDealerBar(state);
+        // Griser le formulaire d'ajout si déjà 5 joueurs
+        const addForm = document.querySelector('.add-player-form');
+        if (addForm) {
+            const full = state.players.length >= 5;
+            addForm.style.opacity = full ? '0.35' : '1';
+            const btn = addForm.querySelector('.btn-add');
+            const inp = addForm.querySelector('input');
+            if (btn) btn.disabled = full;
+            if (inp) inp.disabled = full;
+        }
     },
 
     /* ── Nouvelle partie ── */
@@ -202,6 +212,10 @@ function openScoreModal() {
     const state = game.getState();
     if (state.players.length < 3) {
         alert('Il faut au moins 3 joueurs pour jouer au Tarot !');
+        return;
+    }
+    if (state.players.length > 5) {
+        alert('Le Tarot se joue à 3, 4 ou 5 joueurs maximum !');
         return;
     }
 
@@ -536,7 +550,7 @@ function applyCalc() {
         calcCounts.dames * 3.5 + calcCounts.cavaliers * 2.5 +
         calcCounts.valets * 1.5 + calcCounts.petites * 0.5
     );
-    tempPoints = Math.round(applyExact); // arrondi au moment d'appliquer (règle du comptage par paires)
+    tempPoints = applyExact; // conserver la valeur exacte avec éventuel .5
     tempBouts  = calcCounts.bouts;
     calcOpen   = false;
     renderScoreModal();
@@ -798,6 +812,18 @@ function renderNgDealerList() {
         return;
     }
 
+    // Griser le formulaire d'ajout si on a atteint 5 joueurs (mode "new")
+    const addNewForm = document.querySelector('.add-newplayer-form');
+    if (addNewForm) {
+        const full = players.length >= 5;
+        addNewForm.style.opacity = full ? '0.35' : '1';
+        const addBtn = addNewForm.querySelector('.btn-add-sm');
+        const addInp = addNewForm.querySelector('input');
+        if (addBtn) addBtn.disabled = full;
+        if (addInp) addInp.disabled = full;
+        if (full && addInp) addInp.placeholder = '5 joueurs maximum';
+    }
+
     if (ngDealerIdx >= players.length) ngDealerIdx = 0;
 
     section.innerHTML =
@@ -896,4 +922,22 @@ window.endGame = () => {
 
 
 /* ── INIT ── */
+/* ── Surcharges pour limiter à 5 joueurs dans la modale nouvelle partie ── */
+const _coreNgAddPlayer     = window.ngAddPlayer;
+const _coreNgAddFromRoster = window.ngAddFromRoster || (() => {});
+
+window.ngAddPlayer = () => {
+    if (game.getNgNewPlayers().length >= 5) {
+        const inp = BoardScore.$('ngNewPlayerInput');
+        if (inp) { inp.style.borderColor = 'var(--red)'; setTimeout(() => inp.style.borderColor = '', 800); }
+        return;
+    }
+    _coreNgAddPlayer();
+};
+
+window.ngAddFromRoster = (name) => {
+    if (game.getNgNewPlayers().length >= 5) return;
+    game.ngAddFromRoster(name);
+};
+
 game.init();
