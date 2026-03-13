@@ -16,13 +16,8 @@ const MONTH_NAMES_SHORT = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Ao
 const CHART_COLORS     = ['#9b59f5', '#38bdf8', '#f5c542', '#3ddc84', '#fb7185', '#a3e635', '#f97316'];
 const RANK_MEDALS      = ['🥇', '🥈', '🥉'];
 
-const GAME_NAMES = {
-    mxt:   { name: 'Train Mexicain', emoji: '🚂' },
-    skyjo: { name: 'Skyjo',          emoji: '🃏' },
-    rami:  { name: 'Rami',           emoji: '🃏' },
-    uno:   { name: 'Uno',            emoji: '🎴' },
-    yams:  { name: "Yam's",          emoji: '🎲' },
-};
+// GAME_NAMES → window.GAME_NAMES  (games-registry.js)
+const GAME_NAMES = window.GAME_NAMES;
 
 
 /* ══════════════════════════════════════════
