@@ -53,7 +53,7 @@ let tempPreneur     = null;
 let tempAlly        = null;    // 5 joueurs uniquement
 let tempContrat     = null;
 let tempBouts       = null;
-let tempPoints      = 41;
+let tempPoints      = 0;
 let tempPetitAuBout = null;    // null / 'preneur' / 'defense'
 let tempPoignee     = null;    // null / 'simple' / 'double' / 'triple'
 let tempChelem      = null;    // null / 'unannounced' / 'announced_success' / 'announced_fail'
@@ -61,6 +61,7 @@ let calcOpen        = false;
 let calcCounts      = { bouts: 0, rois: 0, dames: 0, cavaliers: 0, valets: 0, petites: 0 };
 
 /* ── État temporaire nouvelle partie ── */
+let ngDealerIdx    = 0;
 let ngRoundLimit    = null;
 let ngCustomRounds  = 20;
 
@@ -79,6 +80,7 @@ const game = BoardScore.create({
         history:    [],
         dealerIdx:  0,
         roundLimit: null,
+        gameEnded:  false,
     },
 
     /* ── Badge : "Donne N/total" ── */
@@ -131,17 +133,32 @@ const game = BoardScore.create({
 
     /* ── Nouvelle partie ── */
     onOpenNewGameModal(state) {
+        ngDealerIdx    = state.dealerIdx || 0;
         ngRoundLimit   = state.roundLimit;
         ngCustomRounds = ngRoundLimit || 20;
+        renderNgDealerList();
         renderNgRoundLimit();
+    },
+    onSelectPlayerMode(mode) {
+        renderNgDealerList();
+    },
+    onToggleKeepPlayer() {
+        ngDealerIdx = 0;
+        renderNgDealerList();
+    },
+    onNgPlayersChanged() {
+        ngDealerIdx = 0;
+        renderNgDealerList();
     },
     onConfirmNewGame(state) {
         state.roundLimit = ngRoundLimit;
-        state.dealerIdx  = 0;
+        state.dealerIdx  = ngDealerIdx;
+        state.gameEnded  = false;
     },
 
-    /* ── Fin de partie (limite de donnes) ── */
+    /* ── Fin de partie (limite de donnes ou bouton Terminer) ── */
     checkGameEnd(state) {
+        if (state.gameEnded) return true;
         if (!state.roundLimit) return false;
         return state.round > state.roundLimit;
     },
@@ -195,7 +212,7 @@ function openScoreModal() {
     } else {
         tempPreneur = null;  tempAlly    = null;
         tempContrat = null;  tempBouts   = null;
-        tempPoints  = 41;
+        tempPoints  = 0;
         tempPetitAuBout = null;  tempPoignee = null;  tempChelem = null;
     }
 
@@ -701,6 +718,56 @@ function confirmScores() {
 }
 
 
+
+/* ═══════════════════════════════════════════
+   NOUVELLE PARTIE — Sélecteur de premier donneur
+   ═══════════════════════════════════════════ */
+function renderNgDealerList() {
+    const section = BoardScore.$('ng-dealer-section');
+    if (!section) return;
+
+    /* Récupérer la liste des joueurs selon le mode (garder ou nouveaux) */
+    let players = [];
+    const mode = game.getNgMode();
+    if (mode === 'same') {
+        const keepSet = game.getNgKeepSet();
+        players = game.getState().players.filter((_, i) => keepSet.has(i));
+    } else {
+        const ngList = game.getNgNewPlayers();
+        try {
+            const roster = JSON.parse(localStorage.getItem('boardscore_players')) || [];
+            players = ngList.map((name, i) => {
+                const rp = roster.find(r => r.name.toLowerCase() === name.toLowerCase());
+                return { name, color: rp ? rp.color : BoardScore.COLORS[i % BoardScore.COLORS.length] };
+            });
+        } catch(e) { players = ngList.map((name, i) => ({ name, color: BoardScore.COLORS[i % BoardScore.COLORS.length] })); }
+    }
+
+    if (players.length === 0) {
+        section.innerHTML = '<div class="newgame-section-title">🃏 Premier donneur</div>' +
+            '<div style="color:var(--muted);font-size:0.82rem;padding:4px 0">Ajoute des joueurs d\'abord</div>';
+        return;
+    }
+
+    if (ngDealerIdx >= players.length) ngDealerIdx = 0;
+
+    section.innerHTML =
+        '<div class="newgame-section-title">🃏 Premier donneur</div>' +
+        '<div class="picker-list">' +
+        players.map((p, i) =>
+            '<button class="picker-btn ' + (ngDealerIdx === i ? 'selected' : '') +
+            '" onclick="ngSelectDealer(' + i + ')">' +
+            '<span class="pb-dot" style="background:' + p.color + '"></span>' + p.name +
+            '</button>'
+        ).join('') +
+        '</div>';
+}
+
+function ngSelectDealer(i) {
+    ngDealerIdx = i;
+    renderNgDealerList();
+}
+
 /* ═══════════════════════════════════════════
    NOUVELLE PARTIE — Nombre de donnes
    ═══════════════════════════════════════════ */
@@ -765,6 +832,8 @@ window.endGame = () => {
     const state = game.getState();
     if (state.players.length === 0) { alert('Aucun joueur !'); return; }
     if (!state.history.length) { alert('Aucune donne enregistrée.'); return; }
+    state.gameEnded = true;
+    game.save();
     game.showWinner();
 };
 
