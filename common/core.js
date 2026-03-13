@@ -700,6 +700,28 @@ const BoardScore = (() => {
             init,
         };
 
+
+        /* ═══════════════════════════════════════════
+           WRAPPERS GLOBAUX
+           Exposés sur window pour les onclick="..." dans le HTML.
+           Définis ici une seule fois — inutile de les répéter dans chaque jeu.
+           ═══════════════════════════════════════════ */
+        function registerGlobalWrappers() {
+            window.addPlayer            = ()    => instance.addPlayer();
+            window.removePlayer         = (i)   => instance.removePlayer(i);
+            window.nextRound            = ()    => instance.nextRound();
+            window.openNewGameModal     = (m)   => instance.openNewGameModal(m);
+            window.closeNewGameModal    = ()    => instance.closeNewGameModal();
+            window.selectPlayerMode     = (m)   => instance.selectPlayerMode(m);
+            window.toggleKeepPlayer     = (i)   => instance.toggleKeepPlayer(i);
+            window.ngAddPlayer          = ()    => instance.ngAddPlayer();
+            window.ngRemovePlayer       = (i)   => instance.ngRemovePlayer(i);
+            window.confirmNewGame       = ()    => instance.confirmNewGame();
+            window.openNewGameFromWinner= ()    => instance.openNewGameFromWinner();
+            window.closeBgModal         = (e,id)=> instance.closeBgModal(e, id);
+        }
+
+        registerGlobalWrappers();
         return instance;
     }
 

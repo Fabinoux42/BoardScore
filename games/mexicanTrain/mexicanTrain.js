@@ -240,20 +240,6 @@ function selectNgSet(n) {
 }
 
 
-/* ── Fonctions globales (appelées depuis le HTML via onclick) ── */
-function addPlayer()            { game.addPlayer(); }
-function removePlayer(i)        { game.removePlayer(i); }
-function nextRound()            { game.nextRound(); }
-function openNewGameModal()     { game.openNewGameModal(); }
-function closeNewGameModal()    { game.closeNewGameModal(); }
-function selectPlayerMode(m)    { game.selectPlayerMode(m); }
-function toggleKeepPlayer(i)    { game.toggleKeepPlayer(i); }
-function ngAddPlayer()          { game.ngAddPlayer(); }
-function ngRemovePlayer(i)      { game.ngRemovePlayer(i); }
-function confirmNewGame()       { game.confirmNewGame(); }
-function openNewGameFromWinner() { game.openNewGameFromWinner(); }
-function closeBgModal(e, id)    { game.closeBgModal(e, id); }
-
 
 /* ── INIT ── */
 game.init();
