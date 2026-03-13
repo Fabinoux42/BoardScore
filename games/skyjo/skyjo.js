@@ -50,6 +50,11 @@ const game = BoardScore.create({
     /* ── Fin de partie : quelqu'un atteint 100+ ── */
     // Note : pour Skyjo on vérifie après confirmScores, pas après nextRound
     // donc on ne met pas checkGameEnd ici (géré manuellement dans confirmScores)
+
+    /* ── Fin de partie : quelqu'un atteint SCORE_LIMIT ── */
+    checkGameEnd(state) {
+        return state.players.some(p => p.score >= SCORE_LIMIT);
+    }
 });
 
 

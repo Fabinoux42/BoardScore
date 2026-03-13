@@ -83,6 +83,12 @@ const game = BoardScore.create({
 
     onConfirmNewGame(state) {
         state.scoreLimit = ngScoreLimit;
+    },
+
+    /* ── Fin de partie : quelqu'un atteint scoreLimit ── */
+    checkGameEnd(state) {
+        if (!state.scoreLimit) return false;
+        return state.players.some(p => p.score >= state.scoreLimit);
     }
 });
 

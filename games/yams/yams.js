@@ -148,6 +148,11 @@ const game = BoardScore.create({
             state.currentPlayerIdx = 0;
         }
     },
+
+    /* ── Fin de partie : toutes les feuilles sont remplies ── */
+    checkGameEnd(state) {
+        return gameOver(state);
+    }
 });
 
 
