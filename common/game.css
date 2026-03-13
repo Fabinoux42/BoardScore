@@ -858,3 +858,65 @@ input[type="number"]:disabled { opacity: 0.4; }
 .modal-overlay .modal .modal-handle {
     margin-top: 4px;
 }
+/* ═══════════════════════════════════════════
+   RESUME MODAL
+   ═══════════════════════════════════════════ */
+.resume-round {
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 2px 0 12px;
+}
+.resume-players {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 4px 0 20px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+.resume-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.resume-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.resume-name {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--text);
+    font-weight: 500;
+}
+.resume-score {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+}
+.modal-secondary {
+    width: 100%;
+    padding: 13px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.15s;
+}
+.modal-secondary:active {
+    background: var(--glass);
+    color: var(--text);
+}

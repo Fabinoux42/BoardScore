@@ -23,76 +23,8 @@ function toggleTheme() {
 applyTheme(getTheme());
 
 
-/* ── GAMES DATA ── */
-const GAMES = [
-    {
-        id: 'mexican-train',
-        name: 'Train Mexicain',
-        emoji: '🚂',
-        desc: 'Dominos — pose tes tuiles sur le train central',
-        tags: ['multi', 'dominos'],
-        color: '#f5c542',
-        bg: 'rgba(245,197,66,0.12)',
-        url: 'games/mexicanTrain/index.html',
-        available: true,
-    },
-    {
-        id: 'skyjo',
-        name: 'Skyjo',
-        emoji: '🃏',
-        desc: 'Cartes — minimise ton score en retournant des cartes',
-        tags: ['multi', 'cartes'],
-        color: '#38bdf8',
-        bg: 'rgba(56,189,248,0.12)',
-        url: 'games/skyjo/index.html',
-        available: true,
-    },
-    {
-        id: 'rami',
-        name: 'Rami',
-        emoji: '🃏',
-        desc: 'Cartes — pose tes combinaisons et vide ta main',
-        tags: ['multi', 'cartes'],
-        color: '#e05c2a',
-        bg: 'rgba(224,92,42,0.12)',
-        url: 'games/rami/index.html',
-        available: true,
-    },
-    {
-        id: 'uno',
-        name: 'Uno',
-        emoji: '🎴',
-        desc: 'Cartes — vide ta main le premier !',
-        tags: ['multi', 'cartes'],
-        color: '#fb7185',
-        bg: 'rgba(251,113,133,0.12)',
-        url: 'games/uno/index.html',
-        available: true,
-    },
-    {
-        id: 'yams',
-        name: "Yam's",
-        emoji: '🎲',
-        desc: 'Dés — combinaisons et stratégie',
-        tags: ['multi', 'des'],
-        color: '#a3e635',
-        bg: 'rgba(163,230,53,0.12)',
-        url: 'games/yams/index.html',
-        available: true,
-    },
-    {
-        id: 'scrabble',
-        name: 'Scrabble',
-        emoji: '🔠',
-        desc: 'Plateau — forme des mots et accumule les points',
-        tags: ['multi', 'plateau'],
-        color: '#9b59f5',
-        bg: 'rgba(155,89,245,0.12)',
-        url: null,
-        available: false,
-    },
-];
-
+/* ── GAMES DATA — chargé depuis common/games-registry.js ── */
+const GAMES = window.GAMES_REGISTRY;
 
 /* ── FILTERS ── */
 const FILTERS = [
@@ -292,7 +224,7 @@ function doReset(type) {
     // Deuxième clic → suppression effective
     clearTimeout(resetTimers[type]);
 
-    const GAME_KEYS = ['mxt_', 'skyjo_', 'rami_', 'uno_', 'yams_'];
+    const GAME_KEYS = window.GAME_KEYS.map(k => k + '_');
     const PLAYER_KEYS = ['boardscore_players'];
     const MATCH_KEYS = ['boardscore_matches'];
     const OTHER_KEYS = ['boardscore_theme'];

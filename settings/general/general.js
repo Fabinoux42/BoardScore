@@ -16,13 +16,7 @@ const MONTH_NAMES_SHORT = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Ao
 const CHART_COLORS     = ['#9b59f5', '#38bdf8', '#f5c542', '#3ddc84', '#fb7185', '#a3e635', '#f97316'];
 const RANK_MEDALS      = ['🥇', '🥈', '🥉'];
 
-const GAME_NAMES = {
-    mxt:   { name: 'Train Mexicain', emoji: '🚂' },
-    skyjo: { name: 'Skyjo',          emoji: '🃏' },
-    rami:  { name: 'Rami',           emoji: '🃏' },
-    uno:   { name: 'Uno',            emoji: '🎴' },
-    yams:  { name: "Yam's",          emoji: '🎲' },
-};
+// GAME_NAMES → window.GAME_NAMES (games-registry.js)
 
 
 /* ══════════════════════════════════════════
@@ -242,7 +236,7 @@ function openTop3Modal() {
     // Pour chaque jeu, compter les victoires de chaque top3
     let html = '';
     gamesList.forEach((gk, gi) => {
-        const gInfo = GAME_NAMES[gk] || { name: gk, emoji: '🎮' };
+        const gInfo = window.GAME_NAMES[gk] || { name: gk, emoji: '🎮' };
         const canvasId = 'top3chart_' + gi;
 
         // Compter uniquement les joueurs du top3 qui ont participé à ce jeu
