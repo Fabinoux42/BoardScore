@@ -48,3 +48,6 @@ window.BS = {
 
 // Appliquer le thème immédiatement au chargement
 BS.applyTheme(BS.getTheme());
+
+// Exposer toggleTheme() globalement pour les onclick="toggleTheme()" dans le HTML
+window.toggleTheme = () => BS.toggleTheme();

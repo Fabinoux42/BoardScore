@@ -63,7 +63,7 @@ let calcCounts      = { bouts: 0, rois: 0, dames: 0, cavaliers: 0, valets: 0, pe
 /* ── État temporaire nouvelle partie ── */
 let ngDealerIdx    = 0;
 let ngRoundLimit    = null;
-let ngCustomRounds  = 20;
+let ngCustomRounds  = 15;  // valeur initiale non-preset pour que "Perso" s'affiche correctement
 
 
 /* ═══════════════════════════════════════════
@@ -126,9 +126,16 @@ const game = BoardScore.create({
         return '<div class="history-item">' + header + scores + '</div>';
     },
 
-    /* ── Rendu spécifique : bandeau donneur ── */
+    /* ── Rendu spécifique : bandeau donneur + limite joueurs ── */
     onRender(state) {
         renderDealerBar(state);
+        // Griser le formulaire d'ajout si déjà 5 joueurs
+        const addForm = document.querySelector('.add-player-form');
+        if (addForm) addForm.style.opacity = state.players.length >= 5 ? '0.35' : '1';
+        const addBtn = addForm ? addForm.querySelector('.btn-add') : null;
+        if (addBtn) addBtn.disabled = state.players.length >= 5;
+        const inp = addForm ? addForm.querySelector('input') : null;
+        if (inp) inp.disabled = state.players.length >= 5;
     },
 
     /* ── Nouvelle partie ── */
@@ -195,6 +202,10 @@ function openScoreModal() {
     const state = game.getState();
     if (state.players.length < 3) {
         alert('Il faut au moins 3 joueurs pour jouer au Tarot !');
+        return;
+    }
+    if (state.players.length > 5) {
+        alert('Le Tarot se joue à 3, 4 ou 5 joueurs maximum !');
         return;
     }
 
@@ -420,7 +431,7 @@ function esc(str) {
    CALCULATRICE DE CARTES
    ═══════════════════════════════════════════ */
 function buildCalcPanel() {
-    const total = Math.round(
+    const totalExact = (
         calcCounts.bouts * 4.5 +
         calcCounts.rois  * 4.5 +
         calcCounts.dames * 3.5 +
@@ -428,6 +439,9 @@ function buildCalcPanel() {
         calcCounts.valets * 1.5 +
         calcCounts.petites * 0.5
     );
+    // Afficher le vrai total (avec éventuel .5), arrondir uniquement à l'application
+    const totalDisplay = totalExact % 1 === 0 ? totalExact : totalExact.toFixed(1);
+    const total = Math.round(totalExact); // pour le bouton Appliquer
 
     let html = '<div class="calc-panel">';
     CARD_VALUES.forEach(cv => {
@@ -444,8 +458,8 @@ function buildCalcPanel() {
     });
 
     html +=
-        '<div class="calc-total">Total : <strong>' + total + ' pts</strong></div>' +
-        '<button class="calc-apply" onclick="applyCalc()">✅ Appliquer (' + total + ' pts)</button>' +
+        '<div class="calc-total">Total : <strong>' + totalDisplay + ' pts</strong></div>' +
+        '<button class="calc-apply" onclick="applyCalc()">✅ Appliquer (' + totalDisplay + ' pts)</button>' +
         '</div>';
 
     return html;
@@ -473,17 +487,18 @@ function calcStep(key, delta, max) {
     if (el) el.textContent = calcCounts[key];
 
     /* Recalc total */
-    const total = Math.round(
+    const calcExact = (
         calcCounts.bouts * 4.5 + calcCounts.rois * 4.5 +
         calcCounts.dames * 3.5 + calcCounts.cavaliers * 2.5 +
         calcCounts.valets * 1.5 + calcCounts.petites * 0.5
     );
+    const calcDisplay = calcExact % 1 === 0 ? calcExact : calcExact.toFixed(1);
 
     /* Update total affiché */
     const totalEl = document.querySelector('.calc-total');
-    if (totalEl) totalEl.innerHTML = 'Total : <strong>' + total + ' pts</strong>';
+    if (totalEl) totalEl.innerHTML = 'Total : <strong>' + calcDisplay + ' pts</strong>';
     const applyEl = document.querySelector('.calc-apply');
-    if (applyEl) applyEl.textContent = '✅ Appliquer (' + total + ' pts)';
+    if (applyEl) applyEl.textContent = '✅ Appliquer (' + calcDisplay + ' pts)';
 
     /* Si bouts a changé : besoin de rerender pour mettre à jour bout-picker et seuil */
     if (key === 'bouts') {
