@@ -330,7 +330,7 @@
     font-size: 1rem; font-weight: 900;
     color: #a855f7; min-width: 18px; text-align: center;
 }
-.calc-pts { font-size: 0.68rem; color: var(--muted); margin-left: 2px; }
+.calc-pts { font-size: 0.68rem; color: var(--muted); margin-left: 2px; min-width: 30px; text-align: right; }
 .calc-total {
     text-align: center; font-size: 0.8rem;
     color: var(--muted); padding-top: 4px;
@@ -378,3 +378,53 @@
 .sp-loss { color: var(--red); }
 .sp-zero { color: var(--muted); }
 .sp-tag  { font-size: 0.8rem; margin-left: 3px; }
+/* ══════════════════════════════════════════
+   APPEL DE ROI (5 joueurs)
+   ══════════════════════════════════════════ */
+.roi-appel-row {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;
+}
+.roi-btn {
+    flex: 1; min-width: 70px;
+    padding: 8px 4px; border-radius: 10px;
+    border: 2px solid var(--border);
+    background: var(--card);
+    font-size: 0.82rem; font-weight: 700;
+    color: var(--text); cursor: pointer;
+    transition: all 0.13s; text-align: center;
+}
+.roi-btn:active { transform: scale(0.94); }
+.roi-btn.active {
+    border-color: var(--tarot-gold);
+    background: rgba(245, 197, 66, 0.1);
+    color: var(--tarot-gold);
+}
+
+.solo-row {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.solo-label {
+    font-size: 0.82rem; color: var(--text);
+    display: flex; align-items: center; gap: 6px;
+    cursor: pointer;
+}
+.solo-label input[type="checkbox"] {
+    width: 16px; height: 16px;
+    accent-color: #a855f7;
+    cursor: pointer; flex-shrink: 0;
+}
+
+.solo-info {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 0.8rem; font-weight: 600;
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    color: #a855f7;
+    text-align: center;
+}

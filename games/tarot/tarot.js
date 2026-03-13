@@ -51,6 +51,8 @@ const CARD_VALUES = [
 /* ── État temporaire de la modale de score ── */
 let tempPreneur     = null;
 let tempAlly        = null;    // 5 joueurs uniquement
+let tempSolo        = false;   // true = preneur joue seul (roi qu'il possède lui-même)
+let tempRoiAppele   = null;    // 'coeur' | 'carreau' | 'trefle' | 'pique'
 let tempContrat     = null;
 let tempBouts       = null;
 let tempPoints      = 0;
@@ -63,7 +65,8 @@ let calcCounts      = { bouts: 0, rois: 0, dames: 0, cavaliers: 0, valets: 0, pe
 /* ── État temporaire nouvelle partie ── */
 let ngDealerIdx    = 0;
 let ngRoundLimit    = null;
-let ngCustomRounds  = 20;
+let ngIsCustomMode  = false;   // true si l'utilisateur a explicitement choisi "Perso"
+let ngCustomRounds  = 15;
 
 
 /* ═══════════════════════════════════════════
@@ -109,7 +112,9 @@ const game = BoardScore.create({
             '<span class="h-tag">' + sign + ' ' + (c ? c.label + ' ×' + c.mult : '') + '</span>' +
             '</div>' +
             '<div class="h-preneur-line">' +
-            '<span>⚔️ ' + h.preneur + (h.ally ? ' + 🤝 ' + h.ally : '') + '</span>' +
+            '<span>⚔️ ' + h.preneur +
+            (h.roiAppele ? ' (🤴 roi ' + { coeur: '♥', carreau: '♦', trefle: '♣', pique: '♠' }[h.roiAppele] + ')' : '') +
+            (h.solo ? ' — seul contre 4' : (h.ally ? ' + 🤝 ' + h.ally : '')) + '</span>' +
             '<span class="h-pts-detail">' + h.points + ' pts (' + diffStr + ')</span>' +
             '</div>';
 
@@ -126,16 +131,28 @@ const game = BoardScore.create({
         return '<div class="history-item">' + header + scores + '</div>';
     },
 
-    /* ── Rendu spécifique : bandeau donneur ── */
+    /* ── Rendu spécifique : bandeau donneur + limite 5 joueurs ── */
     onRender(state) {
         renderDealerBar(state);
+        // Griser le formulaire d'ajout si déjà 5 joueurs
+        const addForm = document.querySelector('.add-player-form');
+        if (addForm) {
+            const full = state.players.length >= 5;
+            addForm.style.opacity = full ? '0.35' : '1';
+            const btn = addForm.querySelector('.btn-add');
+            const inp = addForm.querySelector('input');
+            if (btn) btn.disabled = full;
+            if (inp) inp.disabled = full;
+        }
     },
 
     /* ── Nouvelle partie ── */
     onOpenNewGameModal(state) {
         ngDealerIdx    = state.dealerIdx || 0;
         ngRoundLimit   = state.roundLimit;
-        ngCustomRounds = ngRoundLimit || 20;
+        const presets   = [10, 20, 30, null];
+        ngIsCustomMode  = ngRoundLimit !== undefined && !presets.includes(ngRoundLimit);
+        ngCustomRounds  = ngIsCustomMode ? ngRoundLimit : 15;
         renderNgDealerList();
         renderNgRoundLimit();
     },
@@ -197,12 +214,18 @@ function openScoreModal() {
         alert('Il faut au moins 3 joueurs pour jouer au Tarot !');
         return;
     }
+    if (state.players.length > 5) {
+        alert('Le Tarot se joue à 3, 4 ou 5 joueurs maximum !');
+        return;
+    }
 
     /* Pré-remplissage si la donne est déjà saisie */
     const existing = state.history.find(h => h.round === state.round);
     if (existing) {
         tempPreneur     = existing.preneur;
         tempAlly        = existing.ally        || null;
+        tempSolo        = existing.solo        || false;
+        tempRoiAppele   = existing.roiAppele   || null;
         tempContrat     = existing.contrat;
         tempBouts       = existing.bouts;
         tempPoints      = existing.points;
@@ -211,6 +234,7 @@ function openScoreModal() {
         tempChelem      = existing.chelem      || null;
     } else {
         tempPreneur = null;  tempAlly    = null;
+        tempSolo    = false; tempRoiAppele = null;
         tempContrat = null;  tempBouts   = null;
         tempPoints  = 0;
         tempPetitAuBout = null;  tempPoignee = null;  tempChelem = null;
@@ -247,21 +271,43 @@ function renderScoreModal() {
         ).join('') +
         '</div></div>';
 
-    /* ── Bloc 2 : Allié (5 joueurs seulement) ── */
+    /* ── Bloc 2 : Allié / Appel de roi (5 joueurs seulement) ── */
     if (n === 5 && tempPreneur) {
+        const ROIS = [
+            { key: 'coeur',   label: '♥ Cœur' },
+            { key: 'carreau', label: '♦ Carreau' },
+            { key: 'trefle',  label: '♣ Trèfle' },
+            { key: 'pique',   label: '♠ Pique' },
+        ];
         html +=
             '<div class="modal-block">' +
-            '<div class="block-label">🤝 Allié du preneur ?</div>' +
-            '<div class="picker-list">' +
-            '<button class="picker-btn ' + (tempAlly === null ? 'selected' : '') +
-            '" onclick="selectAlly(null)">— Aucun</button>' +
-            state.players.filter(p => p.name !== tempPreneur).map(p =>
-                '<button class="picker-btn ' + (tempAlly === p.name ? 'selected' : '') +
-                '" onclick="selectAlly(\'' + esc(p.name) + '\')">' +
-                '<span class="pb-dot" style="background:' + p.color + '"></span>' + p.name +
-                '</button>'
+            '<div class="block-label">🤴 Appel de roi (à 5 joueurs)</div>' +
+            '<div class="roi-appel-row">' +
+            ROIS.map(r =>
+                '<button class="roi-btn ' + (tempRoiAppele === r.key ? 'active' : '') +
+                '" onclick="selectRoi(\'' + r.key + '\')">' + r.label + '</button>'
             ).join('') +
-            '</div></div>';
+            '</div>' +
+            '<div class="solo-row">' +
+            '<label class="solo-label">' +
+            '<input type="checkbox" id="soloCheck" ' + (tempSolo ? 'checked' : '') +
+            ' onchange="toggleSolo()">' +
+            ' &nbsp;Je possède ce roi — je joue <strong>seul contre 4</strong>' +
+            '</label>' +
+            '</div>' +
+            (!tempSolo
+                    ? '<div class="block-label" style="margin-top:10px">🤝 Qui est l\'allié ?</div>' +
+                    '<div class="picker-list">' +
+                    state.players.filter(p => p.name !== tempPreneur).map(p =>
+                        '<button class="picker-btn ' + (tempAlly === p.name ? 'selected' : '') +
+                        '" onclick="selectAlly(\'' + esc(p.name) + '\')">' +
+                        '<span class="pb-dot" style="background:' + p.color + '"></span>' + p.name +
+                        '</button>'
+                    ).join('') +
+                    '</div>'
+                    : '<div class="solo-info">⚔️ Pas d\'allié — le preneur encaisse/gagne × 4</div>'
+            ) +
+            '</div>';
     }
 
     /* ── Bloc 3 : Contrat ── */
@@ -420,7 +466,7 @@ function esc(str) {
    CALCULATRICE DE CARTES
    ═══════════════════════════════════════════ */
 function buildCalcPanel() {
-    const total = Math.round(
+    const totalExact = (
         calcCounts.bouts * 4.5 +
         calcCounts.rois  * 4.5 +
         calcCounts.dames * 3.5 +
@@ -428,6 +474,8 @@ function buildCalcPanel() {
         calcCounts.valets * 1.5 +
         calcCounts.petites * 0.5
     );
+    const totalDisplay = totalExact % 1 === 0 ? totalExact : totalExact.toFixed(1);
+    const total = Math.round(totalExact); // arrondi uniquement pour applyCalc
 
     let html = '<div class="calc-panel">';
     CARD_VALUES.forEach(cv => {
@@ -444,8 +492,8 @@ function buildCalcPanel() {
     });
 
     html +=
-        '<div class="calc-total">Total : <strong>' + total + ' pts</strong></div>' +
-        '<button class="calc-apply" onclick="applyCalc()">✅ Appliquer (' + total + ' pts)</button>' +
+        '<div class="calc-total">Total : <strong>' + totalDisplay + ' pts</strong></div>' +
+        '<button class="calc-apply" onclick="applyCalc()">✅ Appliquer (' + totalDisplay + ' pts)</button>' +
         '</div>';
 
     return html;
@@ -473,17 +521,18 @@ function calcStep(key, delta, max) {
     if (el) el.textContent = calcCounts[key];
 
     /* Recalc total */
-    const total = Math.round(
+    const calcExact = (
         calcCounts.bouts * 4.5 + calcCounts.rois * 4.5 +
         calcCounts.dames * 3.5 + calcCounts.cavaliers * 2.5 +
         calcCounts.valets * 1.5 + calcCounts.petites * 0.5
     );
+    const calcDisplay = calcExact % 1 === 0 ? calcExact : calcExact.toFixed(1);
 
     /* Update total affiché */
     const totalEl = document.querySelector('.calc-total');
-    if (totalEl) totalEl.innerHTML = 'Total : <strong>' + total + ' pts</strong>';
+    if (totalEl) totalEl.innerHTML = 'Total : <strong>' + calcDisplay + ' pts</strong>';
     const applyEl = document.querySelector('.calc-apply');
-    if (applyEl) applyEl.textContent = '✅ Appliquer (' + total + ' pts)';
+    if (applyEl) applyEl.textContent = '✅ Appliquer (' + calcDisplay + ' pts)';
 
     /* Si bouts a changé : besoin de rerender pour mettre à jour bout-picker et seuil */
     if (key === 'bouts') {
@@ -496,12 +545,12 @@ function calcStep(key, delta, max) {
 }
 
 function applyCalc() {
-    const total = Math.round(
+    const applyExact = (
         calcCounts.bouts * 4.5 + calcCounts.rois * 4.5 +
         calcCounts.dames * 3.5 + calcCounts.cavaliers * 2.5 +
         calcCounts.valets * 1.5 + calcCounts.petites * 0.5
     );
-    tempPoints = total;
+    tempPoints = applyExact; // conserver la valeur exacte avec éventuel .5
     tempBouts  = calcCounts.bouts;
     calcOpen   = false;
     renderScoreModal();
@@ -519,6 +568,17 @@ function selectPreneur(name) {
 
 function selectAlly(name) {
     tempAlly = name;
+    renderScoreModal();
+}
+
+function selectRoi(key) {
+    tempRoiAppele = tempRoiAppele === key ? null : key;
+    renderScoreModal();
+}
+
+function toggleSolo() {
+    tempSolo = !tempSolo;
+    if (tempSolo) tempAlly = null;
     renderScoreModal();
 }
 
@@ -636,8 +696,9 @@ function computeScores() {
     exchange = Math.round(exchange);
 
     /* Distribution */
-    const n       = state.players.length;
-    const isAlly  = n === 5 && tempAlly !== null && tempAlly !== tempPreneur;
+    const n         = state.players.length;
+    const isSolo5   = n === 5 && tempSolo;   // preneur possède son roi
+    const isAlly    = n === 5 && !tempSolo && tempAlly !== null && tempAlly !== tempPreneur;
     const defenders = state.players.filter(p =>
         p.name !== tempPreneur && !(isAlly && p.name === tempAlly)
     );
@@ -645,11 +706,11 @@ function computeScores() {
     const scores = {};
 
     if (isAlly) {
-        /* Preneur compte double en 5 joueurs avec allié */
+        /* Preneur + allié : preneur × 2, allié × 1, défenseurs × −1 */
         scores[tempPreneur] = exchange * 2;
         scores[tempAlly]    = exchange;
     } else {
-        /* Preneur seul : reçoit/paie × nombre de défenseurs */
+        /* Preneur seul (4J normal ou 5J solo) : reçoit/paie × nb défenseurs */
         scores[tempPreneur] = exchange * defenders.length;
     }
     defenders.forEach(p => { scores[p.name] = -exchange; });
@@ -699,6 +760,8 @@ function confirmScores() {
         round:      state.round,
         preneur:    tempPreneur,
         ally:       tempAlly,
+        solo:       tempSolo,
+        roiAppele:  tempRoiAppele,
         contrat:    tempContrat,
         bouts:      tempBouts,
         points:     tempPoints,
@@ -749,6 +812,18 @@ function renderNgDealerList() {
         return;
     }
 
+    // Griser le formulaire d'ajout si on a atteint 5 joueurs (mode "new")
+    const addNewForm = document.querySelector('.add-newplayer-form');
+    if (addNewForm) {
+        const full = players.length >= 5;
+        addNewForm.style.opacity = full ? '0.35' : '1';
+        const addBtn = addNewForm.querySelector('.btn-add-sm');
+        const addInp = addNewForm.querySelector('input');
+        if (addBtn) addBtn.disabled = full;
+        if (addInp) addInp.disabled = full;
+        if (full && addInp) addInp.placeholder = '5 joueurs maximum';
+    }
+
     if (ngDealerIdx >= players.length) ngDealerIdx = 0;
 
     section.innerHTML =
@@ -775,13 +850,11 @@ function renderNgRoundLimit() {
     const section = BoardScore.$('ng-limit-section');
     if (!section) return;
 
-    const isCustom = ngRoundLimit !== null && ngRoundLimit !== 10 &&
-        ngRoundLimit !== 20 && ngRoundLimit !== 30;
     const modes = [
-        { val: 10,   label: '10',   sub: 'Courte' },
-        { val: 20,   label: '20',   sub: 'Standard' },
-        { val: 30,   label: '30',   sub: 'Longue' },
-        { val: null, label: '∞',    sub: 'Sans limite' },
+        { val: 10,       label: '10',   sub: 'Courte' },
+        { val: 20,       label: '20',   sub: 'Standard' },
+        { val: 30,       label: '30',   sub: 'Longue' },
+        { val: null,     label: '∞',    sub: 'Sans limite' },
         { val: 'custom', label: 'Perso', sub: 'Nombre libre' },
     ];
 
@@ -789,9 +862,12 @@ function renderNgRoundLimit() {
         '<div class="newgame-section-title">🃏 Nombre de donnes</div>' +
         '<div class="limit-cards">' +
         modes.map(m => {
-            const active = m.val === 'custom'
-                ? isCustom
-                : (m.val === ngRoundLimit && !isCustom);
+            let active;
+            if (m.val === 'custom') {
+                active = ngIsCustomMode;
+            } else {
+                active = !ngIsCustomMode && m.val === ngRoundLimit;
+            }
             const onclickVal = m.val === 'custom' ? "'custom'"
                 : m.val === null ? 'null' : m.val;
             return '<button class="limit-card ' + (active ? 'active' : '') +
@@ -801,27 +877,34 @@ function renderNgRoundLimit() {
                 '</button>';
         }).join('') +
         '</div>' +
-        (isCustom
+        (ngIsCustomMode
             ? '<div class="custom-limit-wrap">' +
             '<input type="number" id="ngCustomRoundsInput" value="' + ngCustomRounds +
-            '" min="5" step="5" oninput="onNgCustomRoundsInput()" />' +
+            '" min="5" step="1" oninput="onNgCustomRoundsInput()" />' +
             '<span class="custom-limit-unit">donnes (min. 5)</span></div>'
             : '');
 }
 
 function selectNgRoundMode(val) {
     if (val === 'custom') {
-        ngRoundLimit = ngCustomRounds >= 5 ? ngCustomRounds : 20;
+        ngIsCustomMode = true;
+        ngRoundLimit   = ngCustomRounds >= 5 ? ngCustomRounds : 15;
     } else {
-        ngRoundLimit = val;
+        ngIsCustomMode = false;
+        ngRoundLimit   = val;   // null (∞) ou nombre
     }
     renderNgRoundLimit();
 }
 
 function onNgCustomRoundsInput() {
     const inp = BoardScore.$('ngCustomRoundsInput');
-    ngCustomRounds = Math.max(5, parseInt(inp?.value) || 5);
-    ngRoundLimit = ngCustomRounds;
+    const v = parseInt(inp?.value) || 0;
+    // Clamp : minimum 5, on corrige le champ visuellement
+    const clamped = Math.max(5, v);
+    ngCustomRounds = clamped;
+    ngRoundLimit   = clamped;
+    // Si l'utilisateur a tapé < 5, corriger l'input directement
+    if (v < 5 && inp) inp.value = clamped;
 }
 
 
@@ -839,4 +922,22 @@ window.endGame = () => {
 
 
 /* ── INIT ── */
+/* ── Surcharges pour limiter à 5 joueurs dans la modale nouvelle partie ── */
+const _coreNgAddPlayer     = window.ngAddPlayer;
+const _coreNgAddFromRoster = window.ngAddFromRoster || (() => {});
+
+window.ngAddPlayer = () => {
+    if (game.getNgNewPlayers().length >= 5) {
+        const inp = BoardScore.$('ngNewPlayerInput');
+        if (inp) { inp.style.borderColor = 'var(--red)'; setTimeout(() => inp.style.borderColor = '', 800); }
+        return;
+    }
+    _coreNgAddPlayer();
+};
+
+window.ngAddFromRoster = (name) => {
+    if (game.getNgNewPlayers().length >= 5) return;
+    game.ngAddFromRoster(name);
+};
+
 game.init();
