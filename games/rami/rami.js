@@ -133,6 +133,12 @@ const game = BoardScore.create({
     onConfirmNewGame(state) {
         state.dealerIdx = ngDealerIdx;
         state.scoreLimit = ngScoreLimit;
+    },
+
+    /* ── Fin de partie : un joueur dépasse scoreLimit ── */
+    checkGameEnd(state) {
+        if (!state.scoreLimit) return false;
+        return state.players.some(p => p.score >= state.scoreLimit);
     }
 });
 
@@ -429,20 +435,6 @@ function onNgCustomLimitInput() {
     ngScoreLimit = ngCustomLimit;
 }
 
-
-/* ── Fonctions globales (appelées depuis le HTML via onclick) ── */
-function addPlayer()             { game.addPlayer(); }
-function removePlayer(i)         { game.removePlayer(i); }
-function nextRound()             { game.nextRound(); }
-function openNewGameModal()      { game.openNewGameModal(); }
-function closeNewGameModal()     { game.closeNewGameModal(); }
-function selectPlayerMode(m)     { game.selectPlayerMode(m); }
-function toggleKeepPlayer(i)     { game.toggleKeepPlayer(i); }
-function ngAddPlayer()           { game.ngAddPlayer(); }
-function ngRemovePlayer(i)       { game.ngRemovePlayer(i); }
-function confirmNewGame()        { game.confirmNewGame(); }
-function openNewGameFromWinner() { game.openNewGameFromWinner(); }
-function closeBgModal(e, id)     { game.closeBgModal(e, id); }
 
 
 /* ── INIT ── */

@@ -148,6 +148,11 @@ const game = BoardScore.create({
             state.currentPlayerIdx = 0;
         }
     },
+
+    /* ── Fin de partie : toutes les feuilles sont remplies ── */
+    checkGameEnd(state) {
+        return gameOver(state);
+    }
 });
 
 
@@ -938,19 +943,12 @@ function selectNgFirstPlayer(i) {
 
 
 /* ═══════════════════════════════════════════
-   FONCTIONS GLOBALES (onclick HTML)
+   OVERRIDES GLOBAUX — spécifiques au Yam's
+   (les wrappers standard sont dans core.js)
    ═══════════════════════════════════════════ */
 
-function nextRound()             { openScoreModal(); }
-function openNewGameModal()      { game.openNewGameModal(); }
-function closeNewGameModal()     { game.closeNewGameModal(); }
-function selectPlayerMode(m)     { game.selectPlayerMode(m); }
-function toggleKeepPlayer(i)     { game.toggleKeepPlayer(i); }
-function ngAddPlayer()           { game.ngAddPlayer(); }
-function ngRemovePlayer(i)       { game.ngRemovePlayer(i); }
-function confirmNewGame()        { game.confirmNewGame(); }
-function openNewGameFromWinner() { game.openNewGameFromWinner(); }
-function closeBgModal(e, id)     { game.closeBgModal(e, id); }
+// nextRound ouvre la modale de score au lieu de passer à la manche
+window.nextRound = () => openScoreModal();
 
 function addPlayer() {
     game.addPlayer();

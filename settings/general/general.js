@@ -16,39 +16,28 @@ const MONTH_NAMES_SHORT = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Ao
 const CHART_COLORS     = ['#9b59f5', '#38bdf8', '#f5c542', '#3ddc84', '#fb7185', '#a3e635', '#f97316'];
 const RANK_MEDALS      = ['🥇', '🥈', '🥉'];
 
-// GAME_NAMES → window.GAME_NAMES (games-registry.js)
+const GAME_NAMES = {
+    mxt:   { name: 'Train Mexicain', emoji: '🚂' },
+    skyjo: { name: 'Skyjo',          emoji: '🃏' },
+    rami:  { name: 'Rami',           emoji: '🃏' },
+    uno:   { name: 'Uno',            emoji: '🎴' },
+    yams:  { name: "Yam's",          emoji: '🎲' },
+};
 
 
 /* ══════════════════════════════════════════
    THÈME
    ══════════════════════════════════════════ */
-function getTheme() { return localStorage.getItem('boardscore_theme') || 'dark'; }
-function applyTheme(t) {
-    document.documentElement.setAttribute('data-theme', t);
-    const btn = document.getElementById('themeToggle');
-    if (btn) btn.textContent = t === 'light' ? '☀️' : '🌙';
-}
-function toggleTheme() {
-    const n = getTheme() === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('boardscore_theme', n);
-    applyTheme(n);
-    // Re-dessiner les charts avec les bonnes couleurs
-    renderGeneralStats();
-}
-applyTheme(getTheme());
+// getTheme → BS.getTheme  (utils.js)
+
+BS.applyTheme(BS.getTheme());
 
 
 /* ══════════════════════════════════════════
    HELPERS DONNÉES
    ══════════════════════════════════════════ */
-function getMatches() {
-    try { return JSON.parse(localStorage.getItem('boardscore_matches')) || []; }
-    catch (e) { return []; }
-}
-function getRoster() {
-    try { return JSON.parse(localStorage.getItem('boardscore_players')) || []; }
-    catch (e) { return []; }
-}
+// getMatches → BS.getMatches  (utils.js)
+// getRoster → BS.getRoster  (utils.js)
 function getTimeData() {
     try { return JSON.parse(localStorage.getItem('boardscore_time')) || {}; }
     catch (e) { return {}; }
@@ -57,7 +46,7 @@ function dateKeyFromTs(ts) {
     const d = new Date(ts);
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
-function getInitial(name) { return name.charAt(0).toUpperCase(); }
+// getInitial → BS.getInitial  (utils.js)
 
 
 /* ══════════════════════════════════════════
@@ -115,7 +104,7 @@ function niceSteps(maxVal) {
 function renderGeneralStats() {
     const container = document.getElementById('generalStatsList');
     if (!container) return;
-    const matches = getMatches();
+    const matches = BS.getMatches();
 
     if (matches.length === 0) {
         container.innerHTML =
@@ -166,7 +155,7 @@ function renderTop3HTML(matches) {
     const winsMap = {};
     matches.forEach(m => { winsMap[m.winner] = (winsMap[m.winner] || 0) + 1; });
 
-    const roster = getRoster();
+    const roster = BS.getRoster();
     const ranked = Object.entries(winsMap)
         .map(([name, wins]) => {
             const rp = roster.find(r => r.name === name);
@@ -180,7 +169,7 @@ function renderTop3HTML(matches) {
     const podium = ranked.map((p, i) =>
         '<div class="podium-entry">' +
         '<span class="podium-medal">' + RANK_MEDALS[i] + '</span>' +
-        '<div class="podium-avatar" style="background:' + p.color + '">' + getInitial(p.name) + '</div>' +
+        '<div class="podium-avatar" style="background:' + p.color + '">' + BS.getInitial(p.name) + '</div>' +
         '<div class="podium-info">' +
         '<div class="podium-name">' + p.name + '</div>' +
         '<div class="podium-score">' + p.wins + ' victoire' + (p.wins > 1 ? 's' : '') +
@@ -203,8 +192,8 @@ function renderTop3HTML(matches) {
    MODAL TOP3 — histogramme victoires par jeu
    ══════════════════════════════════════════ */
 function openTop3Modal() {
-    const matches = getMatches();
-    const roster = getRoster();
+    const matches = BS.getMatches();
+    const roster = BS.getRoster();
 
     // Calculer top3 vainqueurs
     const winsMap = {};
@@ -236,7 +225,7 @@ function openTop3Modal() {
     // Pour chaque jeu, compter les victoires de chaque top3
     let html = '';
     gamesList.forEach((gk, gi) => {
-        const gInfo = window.GAME_NAMES[gk] || { name: gk, emoji: '🎮' };
+        const gInfo = GAME_NAMES[gk] || { name: gk, emoji: '🎮' };
         const canvasId = 'top3chart_' + gi;
 
         // Compter uniquement les joueurs du top3 qui ont participé à ce jeu
@@ -574,7 +563,7 @@ function drawPlayerBarChart(matches) {
     const gridColor  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
 
     const countMap = {}, colorMap = {};
-    const roster = getRoster();
+    const roster = BS.getRoster();
     matches.forEach(m => {
         m.players.forEach(pl => {
             countMap[pl.name] = (countMap[pl.name] || 0) + 1;

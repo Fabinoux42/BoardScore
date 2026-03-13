@@ -50,6 +50,11 @@ const game = BoardScore.create({
     /* ── Fin de partie : quelqu'un atteint 100+ ── */
     // Note : pour Skyjo on vérifie après confirmScores, pas après nextRound
     // donc on ne met pas checkGameEnd ici (géré manuellement dans confirmScores)
+
+    /* ── Fin de partie : quelqu'un atteint SCORE_LIMIT ── */
+    checkGameEnd(state) {
+        return state.players.some(p => p.score >= SCORE_LIMIT);
+    }
 });
 
 
@@ -196,20 +201,6 @@ function confirmScores() {
     }
 }
 
-
-/* ── Fonctions globales (appelées depuis le HTML via onclick) ── */
-function addPlayer()             { game.addPlayer(); }
-function removePlayer(i)         { game.removePlayer(i); }
-function nextRound()             { game.nextRound(); }
-function openNewGameModal()      { game.openNewGameModal(); }
-function closeNewGameModal()     { game.closeNewGameModal(); }
-function selectPlayerMode(m)     { game.selectPlayerMode(m); }
-function toggleKeepPlayer(i)     { game.toggleKeepPlayer(i); }
-function ngAddPlayer()           { game.ngAddPlayer(); }
-function ngRemovePlayer(i)       { game.ngRemovePlayer(i); }
-function confirmNewGame()        { game.confirmNewGame(); }
-function openNewGameFromWinner() { game.openNewGameFromWinner(); }
-function closeBgModal(e, id)     { game.closeBgModal(e, id); }
 
 
 /* ── INIT ── */

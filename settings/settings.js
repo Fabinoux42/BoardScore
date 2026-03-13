@@ -4,18 +4,9 @@
    ═══════════════════════════════════════════ */
 
 /* ── THEME (standalone, pas de core.js ici) ── */
-function getTheme() { return localStorage.getItem('boardscore_theme') || 'dark'; }
-function applyTheme(t) {
-    document.documentElement.setAttribute('data-theme', t);
-    const btn = document.getElementById('themeToggle');
-    if (btn) btn.textContent = t === 'light' ? '☀️' : '🌙';
-}
-function toggleTheme() {
-    const n = getTheme() === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('boardscore_theme', n);
-    applyTheme(n);
-}
-applyTheme(getTheme());
+// getTheme → BS.getTheme  (utils.js)
+
+BS.applyTheme(BS.getTheme());
 
 
 /* ═══════════════════════════════════════════
@@ -28,26 +19,20 @@ const COLORS = [
     '#9b59f5', '#fb7185', '#a3e635', '#f472b6'
 ];
 
-function getRoster() {
-    try {
-        return JSON.parse(localStorage.getItem('boardscore_players')) || [];
-    } catch (e) { return []; }
-}
+// getRoster → BS.getRoster  (utils.js)
 
 function saveRoster(roster) {
     localStorage.setItem('boardscore_players', JSON.stringify(roster));
 }
 
-function getInitial(name) {
-    return name.charAt(0).toUpperCase();
-}
+// getInitial → BS.getInitial  (utils.js)
 
 let editIdx = -1; // index du joueur en cours d'édition
 
 
 /* ── Rendu de la liste ── */
 function renderRoster() {
-    const roster = getRoster();
+    const roster = BS.getRoster();
     const list = document.getElementById('rosterList');
     if (!list) return;
 
@@ -58,7 +43,7 @@ function renderRoster() {
 
     list.innerHTML = roster.map((p, i) =>
         '<div class="roster-card" onclick="openEditPlayer(' + i + ')">' +
-        '<div class="roster-avatar" style="background:' + p.color + '">' + getInitial(p.name) + '</div>' +
+        '<div class="roster-avatar" style="background:' + p.color + '">' + BS.getInitial(p.name) + '</div>' +
         '<div class="roster-info">' +
         '<div class="roster-name">' + p.name + '</div>' +
         '</div>' +
@@ -74,7 +59,7 @@ function addRosterPlayer() {
     const name = input.value.trim();
     if (!name) return;
 
-    const roster = getRoster();
+    const roster = BS.getRoster();
     if (roster.find(p => p.name.toLowerCase() === name.toLowerCase())) {
         input.style.borderColor = 'var(--red)';
         setTimeout(() => input.style.borderColor = '', 800);
@@ -92,7 +77,7 @@ function addRosterPlayer() {
 
 /* ── Éditer un joueur ── */
 function openEditPlayer(idx) {
-    const roster = getRoster();
+    const roster = BS.getRoster();
     const p = roster[idx];
     if (!p) return;
 
@@ -114,7 +99,7 @@ function selectEditColor(color) {
 }
 
 function saveEditPlayer() {
-    const roster = getRoster();
+    const roster = BS.getRoster();
     const p = roster[editIdx];
     if (!p) return;
 
@@ -151,7 +136,7 @@ function saveEditPlayer() {
 }
 
 function deleteEditPlayer() {
-    const roster = getRoster();
+    const roster = BS.getRoster();
     const p = roster[editIdx];
     if (!p) return;
     if (!confirm('Supprimer ' + p.name + ' du roster ?\n(Les données de jeu ne seront pas effacées)')) return;
@@ -171,7 +156,7 @@ function closeEditModal(e) {
 
 /* ── Propager un changement de nom dans les données de jeu ── */
 function updatePlayerNameInGames(oldName, newName) {
-    const gameKeys = window.GAME_KEYS;
+    const gameKeys = ['mxt', 'skyjo', 'rami', 'uno', 'yams'];
     gameKeys.forEach(key => {
         try {
             const raw = localStorage.getItem(key + '_state');
@@ -215,7 +200,7 @@ function updatePlayerNameInGames(oldName, newName) {
 
 /* ── Propager un changement de couleur dans les données de jeu ── */
 function updatePlayerColorInGames(name, newColor) {
-    const gameKeys = window.GAME_KEYS;
+    const gameKeys = ['mxt', 'skyjo', 'rami', 'uno', 'yams'];
     gameKeys.forEach(key => {
         try {
             const raw = localStorage.getItem(key + '_state');
@@ -236,15 +221,18 @@ function updatePlayerColorInGames(name, newColor) {
    STATISTIQUES — basées sur l'historique des fins de partie
    ═══════════════════════════════════════════ */
 
-// GAME_NAMES → window.GAME_NAMES (games-registry.js)
+const GAME_NAMES = {
+    mxt: { name: 'Train Mexicain', emoji: '🚂' },
+    skyjo: { name: 'Skyjo', emoji: '🃏' },
+    rami: { name: 'Rami', emoji: '🃏' },
+    uno: { name: 'Uno', emoji: '🎴' },
+    yams: { name: "Yam's", emoji: '🎲' },
+};
 
-function getMatches() {
-    try { return JSON.parse(localStorage.getItem('boardscore_matches')) || []; }
-    catch (e) { return []; }
-}
+// getMatches → BS.getMatches  (utils.js)
 
 function renderStats() {
-    const roster = getRoster();
+    const roster = BS.getRoster();
     const list = document.getElementById('statsList');
     if (!list) return;
 
@@ -253,7 +241,7 @@ function renderStats() {
         return;
     }
 
-    const matches = getMatches();
+    const matches = BS.getMatches();
 
     const playerStats = roster.map(p => {
         const stats = { name: p.name, color: p.color, games: 0, wins: 0, byGame: {} };
@@ -286,14 +274,14 @@ function renderStats() {
         if (playerMatches.length > 0) {
             const last = playerMatches[playerMatches.length - 1];
             const lastEntry = last.players.find(pl => pl.name === s.name);
-            const gInfo = window.GAME_NAMES[last.game] || { name: last.game, emoji: '🎮' };
+            const gInfo = GAME_NAMES[last.game] || { name: last.game, emoji: '🎮' };
             const won = last.winner === s.name;
             lastText = gInfo.emoji + ' ' + lastEntry.score + ' pts (' + gInfo.name + ')' + (won ? ' 🏆' : '');
         }
 
         return '<div class="stat-card">' +
             '<div class="stat-header">' +
-            '<div class="roster-avatar" style="background:' + s.color + '">' + getInitial(s.name) + '</div>' +
+            '<div class="roster-avatar" style="background:' + s.color + '">' + BS.getInitial(s.name) + '</div>' +
             '<div class="stat-name">' + s.name + '</div>' +
             '</div>' +
             '<div class="stat-grid">' +
@@ -323,8 +311,8 @@ function renderStats() {
 
 /* ── Modale détail stats par jeu ── */
 function openStatDetail(idx) {
-    const roster = getRoster();
-    const matches = getMatches();
+    const roster = BS.getRoster();
+    const matches = BS.getMatches();
     const p = roster[idx];
     if (!p) return;
 
@@ -345,7 +333,7 @@ function openStatDetail(idx) {
 
     let html = '';
     Object.entries(byGame).forEach(([gk, bg]) => {
-        const gInfo = window.GAME_NAMES[gk] || { name: gk, emoji: '🎮' };
+        const gInfo = GAME_NAMES[gk] || { name: gk, emoji: '🎮' };
         const avg = bg.games > 0 ? Math.round(bg.totalScore / bg.games) : 0;
         const wr = bg.games > 0 ? Math.round((bg.wins / bg.games) * 100) : 0;
 
@@ -418,7 +406,11 @@ const EXPORT_KEYS = [
     'boardscore_matches',
     'boardscore_time',
     'boardscore_theme',
-    ...window.GAME_KEYS.map(k => k + '_state'),
+    'mxt_state',
+    'skyjo_state',
+    'rami_state',
+    'uno_state',
+    'yams_state',
 ];
 
 /* ── Export ── */
