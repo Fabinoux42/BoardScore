@@ -171,7 +171,7 @@ function closeEditModal(e) {
 
 /* ── Propager un changement de nom dans les données de jeu ── */
 function updatePlayerNameInGames(oldName, newName) {
-    const gameKeys = ['mxt', 'skyjo', 'rami', 'uno', 'yams'];
+    const gameKeys = window.GAME_KEYS;
     gameKeys.forEach(key => {
         try {
             const raw = localStorage.getItem(key + '_state');
@@ -215,7 +215,7 @@ function updatePlayerNameInGames(oldName, newName) {
 
 /* ── Propager un changement de couleur dans les données de jeu ── */
 function updatePlayerColorInGames(name, newColor) {
-    const gameKeys = ['mxt', 'skyjo', 'rami', 'uno', 'yams'];
+    const gameKeys = window.GAME_KEYS;
     gameKeys.forEach(key => {
         try {
             const raw = localStorage.getItem(key + '_state');
@@ -236,13 +236,7 @@ function updatePlayerColorInGames(name, newColor) {
    STATISTIQUES — basées sur l'historique des fins de partie
    ═══════════════════════════════════════════ */
 
-const GAME_NAMES = {
-    mxt: { name: 'Train Mexicain', emoji: '🚂' },
-    skyjo: { name: 'Skyjo', emoji: '🃏' },
-    rami: { name: 'Rami', emoji: '🃏' },
-    uno: { name: 'Uno', emoji: '🎴' },
-    yams: { name: "Yam's", emoji: '🎲' },
-};
+// GAME_NAMES → window.GAME_NAMES (games-registry.js)
 
 function getMatches() {
     try { return JSON.parse(localStorage.getItem('boardscore_matches')) || []; }
@@ -292,7 +286,7 @@ function renderStats() {
         if (playerMatches.length > 0) {
             const last = playerMatches[playerMatches.length - 1];
             const lastEntry = last.players.find(pl => pl.name === s.name);
-            const gInfo = GAME_NAMES[last.game] || { name: last.game, emoji: '🎮' };
+            const gInfo = window.GAME_NAMES[last.game] || { name: last.game, emoji: '🎮' };
             const won = last.winner === s.name;
             lastText = gInfo.emoji + ' ' + lastEntry.score + ' pts (' + gInfo.name + ')' + (won ? ' 🏆' : '');
         }
@@ -351,7 +345,7 @@ function openStatDetail(idx) {
 
     let html = '';
     Object.entries(byGame).forEach(([gk, bg]) => {
-        const gInfo = GAME_NAMES[gk] || { name: gk, emoji: '🎮' };
+        const gInfo = window.GAME_NAMES[gk] || { name: gk, emoji: '🎮' };
         const avg = bg.games > 0 ? Math.round(bg.totalScore / bg.games) : 0;
         const wr = bg.games > 0 ? Math.round((bg.wins / bg.games) * 100) : 0;
 
@@ -424,11 +418,7 @@ const EXPORT_KEYS = [
     'boardscore_matches',
     'boardscore_time',
     'boardscore_theme',
-    'mxt_state',
-    'skyjo_state',
-    'rami_state',
-    'uno_state',
-    'yams_state',
+    ...window.GAME_KEYS.map(k => k + '_state'),
 ];
 
 /* ── Export ── */
