@@ -4,7 +4,7 @@
   - Ajouter la ligne courbée du temps passé sur l'appli par jours en plus du temps moyen, abscisse de droite aussi mais d'une autre couleur - **FAIT**
 - Classement global - **FAIT**
 - Informations sur l'application depuis le menu - **FAIT**
-- Récap de soirée
+- Récap de soirée - *A voir*
 - Message explicite "Reprendre la partie en cours ?" au lancement si on quitte la partie en cours de route
-- QR code que les joueurs peuvent scanner pour voir les scores en temps réel
-- Export/Import de données de statistiques et de joueurs, comme ça un appareil peut donner ses données à un autre (écrasement total, on va pas s'embêter à faire des merge et jsp quoi)
+- QR code que les joueurs peuvent scanner pour voir les scores en temps réel - **IMPOSSIBLE - Pas de BDD**
+- Export/Import de données de statistiques et de joueurs, comme ça un appareil peut donner ses données à un autre (écrasement total, on va pas s'embêter à faire des merge et jsp quoi) - **FAIT**

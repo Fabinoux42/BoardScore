@@ -582,6 +582,57 @@ const BoardScore = (() => {
 
 
         /* ═══════════════════════════════════════════
+           RESUME MODAL
+           ═══════════════════════════════════════════ */
+        function isGameInProgress() {
+            // Partie en cours = au moins 1 joueur ET (round > 1 OU au moins 1 score ≠ 0)
+            if (!state.players || state.players.length === 0) return false;
+            if (state.round && state.round > 1) return true;
+            if (state.history && state.history.length > 0) return true;
+            if (state.players.some(p => p.score !== 0)) return true;
+            return false;
+        }
+
+        function showResumeModal() {
+            // Construire le mini-résumé des joueurs
+            const rows = state.players.map(p =>
+                '<div class="resume-player">' +
+                '<span class="resume-dot" style="background:' + p.color + '"></span>' +
+                '<span class="resume-name">' + p.name + '</span>' +
+                '<span class="resume-score">' + p.score + '</span>' +
+                '</div>'
+            ).join('');
+
+            const roundInfo = state.round > 1
+                ? '<div class="resume-round">Manche ' + state.round + '</div>'
+                : '';
+
+            const html =
+                '<div class="modal-overlay open" id="resumeModal">' +
+                '<div class="modal">' +
+                '<div class="modal-handle"></div>' +
+                '<div class="modal-title">⏸️ Partie en cours</div>' +
+                '<div class="modal-sub">Tu as quitté une partie en route</div>' +
+                roundInfo +
+                '<div class="resume-players">' + rows + '</div>' +
+                '<button class="modal-confirm" id="resumeYesBtn">▶️ Reprendre la partie</button>' +
+                '<button class="modal-secondary" id="resumeNoBtn">🆕 Nouvelle partie</button>' +
+                '</div>' +
+                '</div>';
+
+            document.body.insertAdjacentHTML('beforeend', html);
+
+            document.getElementById('resumeYesBtn').addEventListener('click', function () {
+                document.getElementById('resumeModal').remove();
+            });
+            document.getElementById('resumeNoBtn').addEventListener('click', function () {
+                document.getElementById('resumeModal').remove();
+                openNewGameModal('new');
+            });
+        }
+
+
+        /* ═══════════════════════════════════════════
            INIT
            ═══════════════════════════════════════════ */
         function init() {
@@ -590,12 +641,13 @@ const BoardScore = (() => {
             initKeyBindings();
             render();
 
-            // Première visite → ouvrir la modale new game en mode "nouveaux joueurs"
-            if (isFirstVisit) {
-                setTimeout(() => {
+            setTimeout(() => {
+                if (isFirstVisit) {
                     openNewGameModal('new');
-                }, 200);
-            }
+                } else if (isGameInProgress()) {
+                    showResumeModal();
+                }
+            }, 200);
         }
 
 
