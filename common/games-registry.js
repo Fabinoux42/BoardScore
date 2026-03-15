@@ -87,6 +87,17 @@ window.GAMES_REGISTRY = [
         available: true,
     },
     {
+        key:       'skullking',
+        name:      'Skull King',
+        emoji:     '☠️',
+        desc:      'Pariez sur vos plis — pirates, sirènes et Skull King !',
+        tags:      ['multi', 'cartes'],
+        color:     '#e8a020',
+        bg:        'rgba(232,160,32,0.12)',
+        url:       'games/skullKing/index.html',
+        available: true,
+    },
+    {
         key:       'scrabble',
         name:      'Scrabble',
         emoji:     '🔠',
