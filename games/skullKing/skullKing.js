@@ -56,7 +56,8 @@ let tempData = {};
 let ngScoreMode    = 'skullking';
 let ngAdvancedKraken = false;
 let ngAdvancedBaleine = false;
-let ngAdvancedButin  = false;
+let ngAdvancedButin    = false;
+let ngAdvancedPirates  = false;
 
 
 /* ═══════════════════════════════════════════
@@ -75,6 +76,7 @@ const game = BoardScore.create({
         advancedKraken:   false,
         advancedBaleine:  false,
         advancedButin:    false,
+        advancedPirates:  false,
     },
 
     /* ── Badge : "Manche N/10 (X cartes)" ── */
@@ -146,6 +148,7 @@ const game = BoardScore.create({
         ngAdvancedKraken  = state.advancedKraken  || false;
         ngAdvancedBaleine = state.advancedBaleine || false;
         ngAdvancedButin   = state.advancedButin   || false;
+        ngAdvancedPirates = state.advancedPirates || false;
         renderNgScoreMode();
     },
     onSelectPlayerMode() { renderNgScoreMode(); },
@@ -156,6 +159,7 @@ const game = BoardScore.create({
         state.advancedKraken  = ngAdvancedKraken;
         state.advancedBaleine = ngAdvancedBaleine;
         state.advancedButin   = ngAdvancedButin;
+        state.advancedPirates = ngAdvancedPirates;
     },
 
     /* ── Fin de partie : 10 manches jouées ── */
@@ -173,31 +177,38 @@ function computeBonus(d) {
         + d.bonusPirate * 30 + (d.bonusSK ? 40 : 0) + (d.bonusButin || 0) * 20;
 }
 
+/* Rascal : pari indépendant du calcul principal (gagné si mise exacte, perdu sinon) */
+function computeRascalBonus(d, ecart) {
+    const bet = d.bonusRascal || 0;
+    if (bet === 0) return 0;
+    return ecart === 0 ? bet : -bet;
+}
+
 function computePlayerScore(d, cardCount, scoreMode) {
-    const mise   = d.mise;
+    const mise   = d.mise + (d.harryDelta || 0);  // Harry ajuste la mise effective
     const result = d.result;
     const ecart  = Math.abs(result - mise);
     const bonus  = computeBonus(d);
+    const rascal = computeRascalBonus(d, ecart);
 
     if (scoreMode === 'skullking') {
         if (mise === 0) {
-            // Mise 0 : pas de bonus (le score est le score entier)
-            return result === 0 ? 10 * cardCount : -(10 * cardCount);
+            return (result === 0 ? 10 * cardCount : -(10 * cardCount)) + rascal;
         }
-        if (ecart === 0) return 20 * mise + bonus;
-        return -(10 * ecart);  // −10 par pli d'écart, pas par carte !
+        if (ecart === 0) return 20 * mise + bonus + rascal;
+        return -(10 * ecart) + rascal;
     }
 
-    /* Rascal */
+    /* Mode Rascal */
     const isBoulet = d.boulet;
     if (ecart === 0) {
         const basePts = isBoulet ? 15 * cardCount : 10 * cardCount;
-        return basePts + bonus;
+        return basePts + bonus + rascal;
     }
     if (ecart === 1 && !isBoulet) {
-        return Math.floor(5 * cardCount + bonus / 2);
+        return Math.floor(5 * cardCount + bonus / 2) + rascal;
     }
-    return 0;
+    return rascal;  // Rascal peut encore gagner/perdre même en échec cuisant
 }
 
 
@@ -217,12 +228,14 @@ function openScoreModal() {
     const existing = state.history.find(h => h.round === state.round);
     state.players.forEach(p => {
         if (existing && existing.scores[p.name]) {
-            tempData[p.name] = { ...existing.scores[p.name], bonusOpen: false };
+            const _ex = existing.scores[p.name];
+            tempData[p.name] = { ..._ex, bonusRascal: _ex.bonusRascal||0, harryDelta: _ex.harryDelta||0, bonusOpen: false };
         } else {
             tempData[p.name] = {
                 mise: 0, result: 0,
                 bonus14c: 0, bonus14n: 0, bonusSiren: 0, bonusPirate: 0,
                 bonusSK: false, bonusButin: 0,
+                bonusRascal: 0, harryDelta: 0,
                 boulet: false, bonusOpen: false
             };
         }
@@ -328,14 +341,14 @@ function renderScoreModal() {
             '🌟 Points bonus' +
             (computeBonus(d) > 0 ? ' <span class="sk-bonus-badge">+' + computeBonus(d) + '</span>' : '') +
             '</div>' +
-            (d.bonusOpen ? buildBonusSection(p.name, d, hasButin) : '') +
+            (d.bonusOpen ? buildBonusSection(p.name, d, hasButin, state.advancedPirates) : '') +
             '</div>';
     });
 
     BoardScore.$('scoreForm').innerHTML = html;
 }
 
-function buildBonusSection(name, d, hasButin) {
+function buildBonusSection(name, d, hasButin, hasPirates) {
     const esc = name.replace(/'/g, "\\'");
     let html = '<div class="sk-bonus-section">';
 
@@ -354,10 +367,41 @@ function buildBonusSection(name, d, hasButin) {
         html += mkBonusCounter(esc, 'bonusButin', 'Alliance Butin réussie (×2 joueurs)',  '+20 / alliance', d.bonusButin || 0);
     }
 
+    if (hasPirates) {
+        // ── Rascal le Flambeur : pari bonus ──
+        const rBet = d.bonusRascal || 0;
+        html += '<div class="sk-bonus-row sk-pirate-power">'+
+            '<span class="sk-bonus-label">🎲 <strong>Rascal</strong> — Pari</span>'+
+            '<div class="sk-rascal-btns">'+
+            mkRascalBtn(esc, 0,  rBet)+
+            mkRascalBtn(esc, 10, rBet)+
+            mkRascalBtn(esc, 20, rBet)+
+            '</div></div>';
+        // ── Harry le Géant : ajustement mise ──
+        const hDelta = d.harryDelta || 0;
+        html += '<div class="sk-bonus-row sk-pirate-power">'+
+            '<span class="sk-bonus-label">💪 <strong>Harry</strong> — Ajuster mise</span>'+
+            '<div class="sk-harry-btns">'+
+            mkHarryBtn(esc, -1, hDelta)+
+            mkHarryBtn(esc,  0, hDelta)+
+            mkHarryBtn(esc,  1, hDelta)+
+            '</div></div>';
+    }
+
     html += '</div>';
     return html;
 }
 
+function mkRascalBtn(esc, val, current) {
+    const a = current === val;
+    const lbl = val === 0 ? '—' : (val > 0 ? '+' + val : val);
+    return '<button class="sk-rascal-btn' + (a ? ' active' : '') + '" onclick="skSetRascal(\'' + esc + '\',' + val + ')">' + lbl + '</button>';
+}
+function mkHarryBtn(esc, delta, current) {
+    const a = current === delta;
+    const lbl = delta === 0 ? '0' : (delta > 0 ? '+1' : '−1');
+    return '<button class="sk-harry-btn' + (a ? ' active' : '') + '" onclick="skSetHarry(\'' + esc + '\',' + delta + ')">' + lbl + '</button>';
+}
 function mkBonusCounter(esc, field, label, pts, val) {
     return '<div class="sk-bonus-row">' +
         '<span class="sk-bonus-label">' + label + '</span>' +
@@ -400,6 +444,14 @@ function skToggleSK(name) {
     tempData[name].bonusSK = !tempData[name].bonusSK;
     renderScoreModal();
 }
+function skSetRascal(name, val) {
+    tempData[name].bonusRascal = (tempData[name].bonusRascal === val) ? 0 : val;
+    renderScoreModal();
+}
+function skSetHarry(name, delta) {
+    tempData[name].harryDelta = delta;
+    renderScoreModal();
+}
 
 
 /* ═══════════════════════════════════════════
@@ -418,7 +470,8 @@ function confirmScores() {
         scores[p.name] = { mise: d.mise, result: d.result, pts,
             bonus14c: d.bonus14c, bonus14n: d.bonus14n,
             bonusSiren: d.bonusSiren, bonusPirate: d.bonusPirate,
-            bonusSK: d.bonusSK, bonusButin: d.bonusButin || 0, boulet: d.boulet };
+            bonusSK: d.bonusSK, bonusButin: d.bonusButin || 0,
+            bonusRascal: d.bonusRascal || 0, harryDelta: d.harryDelta || 0, boulet: d.boulet };
     });
 
     const existingIdx = state.history.findIndex(h => h.round === round);
@@ -467,6 +520,7 @@ function renderNgScoreMode() {
         '<div class="newgame-section-title" style="margin-top:14px">🏴‍☠️ Règles avancées (optionnel)</div>' +
         '<div class="sk-advanced-rules">' +
         mkAdvancedToggle('butin',   '💰 Butin', 'Alliance +20 si les deux joueurs ont misé juste', ngAdvancedButin) +
+        mkAdvancedToggle('pirates', '🏴‍☠️ Pouvoirs des pirates', 'Active Rascal (pari ±0/10/20) et Harry (ajuster mise ±1) dans la saisie', ngAdvancedPirates) +
         '</div>';
 }
 
@@ -486,12 +540,19 @@ function toggleAdvanced(key) {
     if (key === 'kraken')  ngAdvancedKraken  = !ngAdvancedKraken;
     if (key === 'baleine') ngAdvancedBaleine = !ngAdvancedBaleine;
     if (key === 'butin')   ngAdvancedButin   = !ngAdvancedButin;
+    if (key === 'pirates') ngAdvancedPirates = !ngAdvancedPirates;
     renderNgScoreMode();
 }
 
 
 /* ── Surcharge confirmNewGame : min 2, max 8 joueurs ── */
 const _coreConfirmNewGame = window.confirmNewGame;
+function skShowNgError(msg) {
+    const el = BoardScore.$('ng-player-error');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+}
 window.confirmNewGame = () => {
     const mode = game.getNgMode();
     let count = 0;
@@ -501,13 +562,14 @@ window.confirmNewGame = () => {
         count = game.getNgNewPlayers().length;
     }
     if (count < 2) {
-        alert('Il faut au moins 2 joueurs pour jouer à Skull King !');
+        skShowNgError('⚠️ Il faut au moins 2 joueurs pour jouer à Skull King !');
         return;
     }
     if (count > 8) {
-        alert('Skull King se joue à 8 joueurs maximum !');
+        skShowNgError('⚠️ Skull King se joue à 8 joueurs maximum !');
         return;
     }
+    skShowNgError('');
     _coreConfirmNewGame();
 };
 

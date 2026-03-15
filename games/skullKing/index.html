@@ -103,6 +103,43 @@
             </div>
             <div class="sh-note">Bonus SK classique : accordés uniquement si mise exacte. Rascal : bonus suivent la précision.</div>
 
+            <!-- Pouvoirs pirates -->
+            <div class="scoring-help-title" style="margin-top:12px">🏴‍☠️ Pouvoirs avancés des pirates (optionnel)</div>
+            <div class="sh-note" style="margin-bottom:6px">Chaque pouvoir s'active en gagnant un pli avec ce pirate. Doit être utilisé immédiatement.</div>
+            <div class="sk-pirate-list">
+
+                <div class="sk-pirate-card">
+                    <div class="sk-pirate-name">🍰 Rosie la Douce</div>
+                    <div class="sk-pirate-power">Choisissez n'importe quel joueur pour commencer le prochain pli.</div>
+                    <div class="sk-pirate-score-tag">Pas d'impact sur le score</div>
+                </div>
+
+                <div class="sk-pirate-card">
+                    <div class="sk-pirate-name">🗡️ Will le Bandit</div>
+                    <div class="sk-pirate-power">Ajoutez 2 cartes de la pioche à votre main, puis défaussez 2 cartes.</div>
+                    <div class="sk-pirate-score-tag">Pas d'impact sur le score</div>
+                </div>
+
+                <div class="sk-pirate-card sk-pirate-card-score">
+                    <div class="sk-pirate-name">🎲 Rascal le Flambeur</div>
+                    <div class="sk-pirate-power">Pariez 0, 10 ou 20 points. Gagnez-les si votre mise est exacte, perdez-les sinon.</div>
+                    <div class="sk-pirate-score-tag sk-pirate-score-yes">⚡ Impacte le score — activez "Pouvoirs des pirates" en nouvelle partie</div>
+                </div>
+
+                <div class="sk-pirate-card">
+                    <div class="sk-pirate-name">🔮 Juanita Jade</div>
+                    <div class="sk-pirate-power">Regardez secrètement les cartes non distribuées pour voir ce qui n'est pas en jeu.</div>
+                    <div class="sk-pirate-score-tag">Pas d'impact sur le score</div>
+                </div>
+
+                <div class="sk-pirate-card sk-pirate-card-score">
+                    <div class="sk-pirate-name">💪 Harry le Géant</div>
+                    <div class="sk-pirate-power">Après le dernier pli, modifiez votre mise de +1, −1 ou laissez-la. Seul pirate dont le pouvoir s'utilise après le dernier pli.</div>
+                    <div class="sk-pirate-score-tag sk-pirate-score-yes">⚡ Impacte le score — activez "Pouvoirs des pirates" en nouvelle partie</div>
+                </div>
+
+            </div>
+
             <!-- Règles avancées -->
             <div class="scoring-help-title" style="margin-top:12px">⚓ Règles avancées (optionnel)</div>
 
@@ -198,6 +235,7 @@
 
         <div class="newgame-section" id="ng-limit-section"></div>
 
+        <div id="ng-player-error" class="ng-player-error" style="display:none"></div>
         <button class="newgame-confirm" onclick="confirmNewGame()">☠️ À l'abordage !</button>
         <button class="newgame-cancel"  onclick="closeNewGameModal()">Annuler</button>
     </div>
