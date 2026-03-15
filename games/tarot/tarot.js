@@ -131,7 +131,7 @@ const game = BoardScore.create({
         return '<div class="history-item">' + header + scores + '</div>';
     },
 
-    /* ── Rendu spécifique : bandeau donneur + limite 5 joueurs ── */
+    /* ── Rendu spécifique : bandeau donneur + limite 5 joueurs + aide-mémoire ── */
     onRender(state) {
         renderDealerBar(state);
         // Griser le formulaire d'ajout si déjà 5 joueurs
@@ -144,6 +144,7 @@ const game = BoardScore.create({
             if (btn) btn.disabled = full;
             if (inp) inp.disabled = full;
         }
+        renderPoigneeAide(state.players.length);
     },
 
     /* ── Nouvelle partie ── */
@@ -181,6 +182,27 @@ const game = BoardScore.create({
     },
 });
 
+
+/* ═══════════════════════════════════════════
+   AIDE-MÉMOIRE — Poignée adaptée au nombre de joueurs
+   Règlement FFT : 4J = 10/13/15 atouts, 3J = 13/15/18, 5J = 8/10/13
+   ═══════════════════════════════════════════ */
+function renderPoigneeAide(nbPlayers) {
+    const el = document.getElementById('poigneeAideContent');
+    if (!el) return;
+    const POIGNEE_THRESHOLDS = {
+        3: { simple: 13, double: 15, triple: 18 },
+        4: { simple: 10, double: 13, triple: 15 },
+        5: { simple:  8, double: 10, triple: 13 },
+    };
+    const t = POIGNEE_THRESHOLDS[nbPlayers] || POIGNEE_THRESHOLDS[4];
+    el.innerHTML =
+        '<span class="sh-card">Simple (' + t.simple + ' atouts)</span><span class="sh-pts">±20 / j.</span>' +
+        '<div class="sh-divider"></div>' +
+        '<span class="sh-card">Double (' + t.double + ' atouts)</span><span class="sh-pts">±30 / j.</span>' +
+        '<div class="sh-divider"></div>' +
+        '<span class="sh-card">Triple (' + t.triple + ' atouts)</span><span class="sh-pts">±40 / j.</span>';
+}
 
 /* ═══════════════════════════════════════════
    BANDEAU DONNEUR
@@ -415,10 +437,11 @@ function renderScoreModal() {
         '<div class="prime-row">' +
         '<span class="prime-label">👑 Chelem</span>' +
         '<div class="prime-btns">' +
-        mkPrimeBtn('setChelem(null)',                  tempChelem === null,               '—')               +
-        mkPrimeBtn('setChelem(\'unannounced\')',        tempChelem === 'unannounced',       'Réussi +200')     +
-        mkPrimeBtn('setChelem(\'announced_success\')', tempChelem === 'announced_success', 'Annoncé ✅ +400') +
-        mkPrimeBtn('setChelem(\'announced_fail\')',    tempChelem === 'announced_fail',    'Annoncé ❌ −200') +
+        mkPrimeBtn('setChelem(null)',                  tempChelem === null,               '—')                    +
+        mkPrimeBtn('setChelem(\'unannounced\')',        tempChelem === 'unannounced',       '⚔️ Réussi +200')       +
+        mkPrimeBtn('setChelem(\'announced_success\')', tempChelem === 'announced_success', '⚔️ Annoncé ✅ +400')    +
+        mkPrimeBtn('setChelem(\'announced_fail\')',    tempChelem === 'announced_fail',    '⚔️ Annoncé ❌ −200')   +
+        mkPrimeBtn('setChelem(\'defense_chelem\')',    tempChelem === 'defense_chelem',    '🛡 Défense +200',       'La défense a fait chelem') +
         '</div></div>';
 
     html += '</div>'; // end primes block
@@ -688,10 +711,13 @@ function computeScores() {
     const pg = POIGNEES.find(p => p.key === tempPoignee);
     if (pg) exchange += success ? pg.pts : -pg.pts;
 
-    /* Chelem : ±200 / ±400 par joueur */
+    /* Chelem : ±200 / ±400 par joueur (primes fixes, pas multipliées) */
     if (tempChelem === 'announced_success') exchange += 400;
     else if (tempChelem === 'announced_fail') exchange -= 200;
     else if (tempChelem === 'unannounced' && success) exchange += 200;
+        // Chelem de la défense : le preneur a encaissé un chelem ennemi → chaque défenseur +200
+    // (on traite ça comme une prime négative pour le preneur : exchange -= 200)
+    else if (tempChelem === 'defense_chelem') exchange -= 200;
 
     exchange = Math.round(exchange);
 
