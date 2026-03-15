@@ -1,0 +1,398 @@
+/* ═══════════════════════════════════════════
+   skullking.css — Styles spécifiques à Skull King
+   ═══════════════════════════════════════════ */
+
+/* ── ACCENT : ambre pirate ── */
+:root {
+    --game-accent:     #e8a020;
+    --game-accent-rgb: 232, 160, 32;
+    --game-accent-text: #1a0a00;
+    --sk-red:          #c0392b;
+    --sk-dark:         #1a0a00;
+}
+
+/* ── HEADER ── */
+.header-title span { color: var(--game-accent); }
+
+/* ── PROGRESS BAR ── */
+.progress-bar-inner { background: linear-gradient(90deg, var(--game-accent), var(--sk-red)); }
+
+/* ── CARD DECO ── */
+.card-deco {
+    display: flex; gap: 12px; justify-content: center;
+    padding: 16px 0 4px; font-size: 1.4rem;
+    opacity: 0.12; letter-spacing: 2px;
+}
+
+/* ══════════════════════════════════════════
+   AIDE-MÉMOIRE
+   ══════════════════════════════════════════ */
+.scoring-help {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+}
+.scoring-help-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.88rem; font-weight: 700;
+    color: var(--game-accent); margin-bottom: 8px;
+}
+.scoring-help-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 5px 12px; font-size: 0.78rem;
+}
+.sh-card  { color: var(--text); }
+.sh-pts   { color: var(--game-accent); font-weight: 700; text-align: right; font-family: 'Playfair Display', serif; }
+.sh-divider { grid-column: 1/-1; height: 1px; background: var(--border); margin: 2px 0; }
+.sh-note  { margin-top: 6px; font-size: 0.68rem; color: var(--muted); font-style: italic; }
+
+/* Hiérarchie des cartes */
+.sk-hierarchy {
+    display: flex; align-items: center; gap: 4px;
+    flex-wrap: wrap; margin: 6px 0 0;
+    font-size: 0.72rem;
+}
+.sk-hier-card {
+    padding: 3px 8px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    font-weight: 600; color: var(--text);
+    white-space: nowrap;
+}
+.sk-hier-card.trump  { border-color: rgba(232,160,32,0.4); color: var(--game-accent); }
+.sk-hier-card.pirate { border-color: rgba(220,80,50,0.4);  color: #e05030; }
+.sk-hier-card.sk     { border-color: rgba(180,60,200,0.4); color: #c050e0; }
+.sk-hier-card.siren  { border-color: rgba(56,189,248,0.4); color: #38bdf8; }
+.sk-hier-sep         { color: var(--muted); font-size: 0.9rem; }
+.sk-hier-note        { font-size: 0.65rem; color: var(--muted); width: 100%; margin-top: 2px; }
+
+/* ══════════════════════════════════════════
+   SCORE MODAL — Lignes par joueur
+   ══════════════════════════════════════════ */
+.sk-player-row {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 12px 10px;
+    margin-bottom: 10px;
+}
+
+/* En-tête joueur */
+.sk-player-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.sk-avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    font-family: 'Playfair Display', serif; font-weight: 900;
+    font-size: 1rem; color: white;
+    display: flex; align-items: center; justify-content: center;
+}
+.sk-player-info { flex: 1; min-width: 0; }
+.sk-player-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+.sk-player-total { font-size: 0.72rem; color: var(--muted); }
+.sk-live-score {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem; font-weight: 900;
+    min-width: 50px; text-align: right; flex-shrink: 0;
+}
+.sk-live-score.sp-gain { color: var(--green); }
+.sk-live-score.sp-loss { color: var(--red); }
+.sk-live-score.sp-zero { color: var(--muted); }
+
+/* Inputs mise + résultat */
+.sk-inputs-row {
+    display: flex; gap: 10px;
+}
+.sk-input-group { flex: 1; }
+.sk-input-label {
+    font-size: 0.7rem; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin-bottom: 4px;
+}
+.sk-stepper-wrap {
+    display: flex; align-items: center; gap: 6px;
+}
+.sk-stepper-wrap input[type="number"] {
+    flex: 1; text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem; font-weight: 900;
+    padding: 6px 2px;
+}
+
+/* Tag précision */
+.sk-precision-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px; flex-wrap: wrap;
+}
+.sk-prec {
+    font-size: 0.72rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 8px;
+}
+.sk-prec.direct  { background: rgba(61,220,132,0.12); color: var(--green); border: 1px solid rgba(61,220,132,0.3); }
+.sk-prec.revers  { background: rgba(232,160,32,0.1);  color: var(--game-accent); border: 1px solid rgba(232,160,32,0.3); }
+.sk-prec.fail    { background: rgba(255,85,85,0.1);   color: var(--red); border: 1px solid rgba(255,85,85,0.3); }
+
+/* Boulet de canon */
+.sk-boulet-toggle {
+    font-size: 0.72rem; font-weight: 600;
+    padding: 3px 10px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--glass); color: var(--muted);
+    cursor: pointer; transition: all 0.13s;
+    user-select: none;
+}
+.sk-boulet-toggle:active { transform: scale(0.94); }
+.sk-boulet-toggle.active {
+    border-color: var(--game-accent);
+    background: rgba(232,160,32,0.12);
+    color: var(--game-accent);
+}
+
+/* Toggle bonus */
+.sk-bonus-toggle {
+    font-size: 0.75rem; font-weight: 600;
+    color: var(--muted); cursor: pointer;
+    margin-top: 8px; padding: 5px 0;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+    user-select: none; transition: color 0.13s;
+}
+.sk-bonus-toggle::after { content: '▸'; margin-left: auto; }
+.sk-bonus-toggle.open::after { content: '▾'; }
+.sk-bonus-toggle:active { color: var(--game-accent); }
+.sk-bonus-badge {
+    font-size: 0.68rem; font-weight: 700;
+    background: rgba(232,160,32,0.15);
+    color: var(--game-accent);
+    padding: 1px 6px; border-radius: 6px;
+    border: 1px solid rgba(232,160,32,0.3);
+}
+
+/* Section bonus */
+.sk-bonus-section {
+    margin-top: 8px; padding: 8px 0 0;
+    display: flex; flex-direction: column; gap: 8px;
+    animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.sk-bonus-row {
+    display: flex; align-items: center; gap: 8px;
+}
+.sk-bonus-label { flex: 1; font-size: 0.73rem; color: var(--text); min-width: 0; }
+.sk-bonus-pts   { font-size: 0.7rem; color: var(--game-accent); font-weight: 700; white-space: nowrap; }
+.sk-bonus-counter {
+    display: flex; align-items: center; gap: 5px; flex-shrink: 0;
+}
+.sk-bonus-step {
+    width: 26px; height: 26px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--glass);
+    font-size: 0.95rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none;
+}
+.sk-bonus-step:active { background: var(--glass-strong); }
+.sk-bonus-counter span {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 900;
+    color: var(--game-accent); min-width: 18px; text-align: center;
+}
+.sk-bonus-check {
+    font-size: 1.1rem; cursor: pointer; user-select: none;
+    padding: 0 4px; transition: transform 0.1s;
+}
+.sk-bonus-check:active { transform: scale(0.85); }
+
+/* ══════════════════════════════════════════
+   HISTORIQUE
+   ══════════════════════════════════════════ */
+.sk-hscore {
+    display: flex; align-items: center; gap: 5px;
+}
+.sk-mise-tag {
+    font-size: 0.68rem; color: var(--muted);
+    background: var(--glass); padding: 1px 5px;
+    border-radius: 5px; flex-shrink: 0;
+}
+/* ══════════════════════════════════════════
+   CONTRAINTE PLIS / NOTE 2 JOUEURS
+   ══════════════════════════════════════════ */
+.sk-result-cap {
+    font-size: 0.7rem; color: var(--muted);
+    padding: 2px 4px; margin-left: -2px;
+    flex-shrink: 0;
+}
+
+.sk-two-player-note {
+    margin: 8px 16px 0;
+    padding: 10px 12px;
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.25);
+    border-radius: 12px;
+    font-size: 0.78rem;
+    color: var(--text);
+    line-height: 1.5;
+}
+
+/* ══════════════════════════════════════════
+   RÈGLES AVANCÉES (nouvelle partie)
+   ══════════════════════════════════════════ */
+.sk-advanced-rules {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.sk-adv-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    cursor: pointer;
+    transition: all 0.13s;
+    user-select: none;
+}
+.sk-adv-toggle:active { transform: scale(0.98); }
+.sk-adv-toggle.active {
+    border-color: var(--game-accent);
+    background: rgba(232,160,32,0.08);
+}
+.sk-adv-info { flex: 1; min-width: 0; }
+.sk-adv-label {
+    font-size: 0.85rem; font-weight: 700;
+    color: var(--text);
+}
+.sk-adv-toggle.active .sk-adv-label { color: var(--game-accent); }
+.sk-adv-desc {
+    font-size: 0.7rem; color: var(--muted);
+    margin-top: 2px; line-height: 1.4;
+}
+.sk-adv-check { font-size: 1rem; flex-shrink: 0; }
+/* ══════════════════════════════════════════
+   AIDE-MÉMOIRE RÈGLES AVANCÉES
+   ══════════════════════════════════════════ */
+.sk-adv-aide {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 6px;
+}
+.sk-adv-aide-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 0.77rem; color: var(--text); line-height: 1.5;
+    padding: 8px 10px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.sk-adv-aide-icon {
+    font-size: 1.1rem; flex-shrink: 0; margin-top: 1px;
+}
+.sk-adv-aide-item strong { color: var(--game-accent); }
+/* ══════════════════════════════════════════
+   ERREUR INLINE MODALE NOUVELLE PARTIE
+   ══════════════════════════════════════════ */
+.ng-player-error {
+    margin: 0 0 10px;
+    padding: 10px 14px;
+    background: rgba(255, 85, 85, 0.1);
+    border: 1px solid rgba(255, 85, 85, 0.35);
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--red);
+    text-align: center;
+    animation: fadeIn 0.15s ease;
+}
+
+/* ══════════════════════════════════════════
+   PIRATES — AIDE-MÉMOIRE
+   ══════════════════════════════════════════ */
+.sk-pirate-list {
+    display: flex; flex-direction: column; gap: 7px;
+    margin-top: 4px;
+}
+.sk-pirate-card {
+    padding: 9px 11px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.sk-pirate-card-score {
+    border-color: rgba(232,160,32,0.3);
+    background: rgba(232,160,32,0.05);
+}
+.sk-pirate-name {
+    font-size: 0.82rem; font-weight: 700;
+    color: var(--text); margin-bottom: 3px;
+}
+.sk-pirate-card-score .sk-pirate-name { color: var(--game-accent); }
+.sk-pirate-power {
+    font-size: 0.75rem; color: var(--text);
+    line-height: 1.45; margin-bottom: 5px;
+}
+.sk-pirate-score-tag {
+    font-size: 0.68rem; color: var(--muted);
+    font-style: italic;
+}
+.sk-pirate-score-yes {
+    color: var(--game-accent);
+    font-style: normal; font-weight: 600;
+}
+
+/* ══════════════════════════════════════════
+   PIRATES — SAISIE (Rascal + Harry)
+   ══════════════════════════════════════════ */
+.sk-pirate-power {
+    border-top: 1px solid rgba(232,160,32,0.2);
+    padding-top: 8px;
+    margin-top: 2px;
+}
+.sk-rascal-btns,
+.sk-harry-btns {
+    display: flex; gap: 4px; flex-shrink: 0;
+}
+.sk-rascal-btn,
+.sk-harry-btn {
+    padding: 4px 10px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem; font-weight: 700;
+    color: var(--muted); cursor: pointer;
+    transition: all 0.12s; user-select: none;
+}
+.sk-rascal-btn:active,
+.sk-harry-btn:active { transform: scale(0.92); }
+.sk-rascal-btn.active {
+    border-color: var(--game-accent);
+    background: rgba(232,160,32,0.15);
+    color: var(--game-accent);
+}
+.sk-harry-btn.active {
+    border-color: #38bdf8;
+    background: rgba(56,189,248,0.12);
+    color: #38bdf8;
+}
+
+/* ══════════════════════════════════════════
+   AIDE-MÉMOIRE RÈGLES AVANCÉES
+   ══════════════════════════════════════════ */
+.sk-adv-aide {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 6px;
+}
+.sk-adv-aide-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 0.77rem; color: var(--text); line-height: 1.5;
+    padding: 8px 10px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.sk-adv-aide-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.sk-adv-aide-item strong { color: var(--game-accent); }

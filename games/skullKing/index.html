@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#1a0a00" />
+    <title>☠️ Skull King</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../../style.css" />
+    <link rel="stylesheet" href="../../common/game.css" />
+    <link rel="stylesheet" href="skullKing.css" />
+</head>
+<body>
+<div id="app">
+
+    <header>
+        <div class="header-left">
+            <a href="../../index.html" class="btn-back">←</a>
+            <div>
+                <div class="header-title">☠️ <span>Skull King</span></div>
+                <div class="header-sub">Compteur de points</div>
+            </div>
+        </div>
+        <div class="round-badge" id="roundBadge">⏳ Manche 1/10</div>
+    </header>
+
+    <div class="section" style="margin-top:16px;">
+        <div class="section-title">Joueurs</div>
+        <div class="players-list" id="playersList"></div>
+    </div>
+
+    <div class="section" style="margin-top:16px;">
+        <div class="section-title">Ajouter un joueur</div>
+        <div class="add-player-form">
+            <input type="text" id="newPlayerName" placeholder="Nom du joueur…" maxlength="20" />
+            <button class="btn-add" onclick="addPlayer()">+ Ajouter</button>
+        </div>
+    </div>
+
+    <!-- Aide-mémoire -->
+    <div class="section" style="margin-top:18px;">
+        <div class="section-title">Aide-mémoire</div>
+        <div class="scoring-help">
+
+            <!-- Hiérarchie -->
+            <div class="scoring-help-title">⚔️ Hiérarchie des cartes</div>
+            <div class="sk-hierarchy">
+                <span class="sk-hier-card">Fuite</span>
+                <span class="sk-hier-sep">‹</span>
+                <span class="sk-hier-card">Couleurs (1–14)</span>
+                <span class="sk-hier-sep">‹</span>
+                <span class="sk-hier-card trump">Noir (atout)</span>
+                <span class="sk-hier-sep">‹</span>
+                <span class="sk-hier-card pirate">Pirate</span>
+                <span class="sk-hier-sep">‹</span>
+                <span class="sk-hier-card sk">Skull King</span>
+                <span class="sk-hier-sep">‹</span>
+                <span class="sk-hier-card siren">Sirène 🧜</span>
+                <div class="sk-hier-note">⚠️ Sirène bat Skull King — Skull King bat Pirate — Pirate bat Sirène</div>
+            </div>
+
+            <!-- Scoring SK -->
+            <div class="scoring-help-title" style="margin-top:12px">☠️ Mode Skull King</div>
+            <div class="scoring-help-grid">
+                <span class="sh-card">Mise = 0 et réussie</span><span class="sh-pts">+10 × manches</span>
+                <div class="sh-divider"></div>
+                <span class="sh-card">Mise = 0 et ratée</span><span class="sh-pts">−10 × manches</span>
+                <div class="sh-divider"></div>
+                <span class="sh-card">Mise ≥ 1 exacte</span><span class="sh-pts">+20 × mise + bonus</span>
+                <div class="sh-divider"></div>
+                <span class="sh-card">Mise ≥ 1 pas exacte</span><span class="sh-pts">−10 × |écart|</span>
+            </div>
+
+            <!-- Scoring Rascal -->
+            <div class="scoring-help-title" style="margin-top:12px">🎯 Mode Rascal</div>
+            <div class="scoring-help-grid">
+                <span class="sh-card">Potentiel (tous pareil)</span><span class="sh-pts">10 × cartes</span>
+                <div class="sh-divider"></div>
+                <span class="sh-card">Coup direct (exact)</span><span class="sh-pts">100% + bonus</span>
+                <div class="sh-divider"></div>
+                <span class="sh-card">Frappe à revers (±1)</span><span class="sh-pts">50% + ½ bonus</span>
+                <div class="sh-divider"></div>
+                <span class="sh-card">Échec cuisant (±2+)</span><span class="sh-pts">0 pt</span>
+                <div class="sh-divider"></div>
+                <span class="sh-card">💣 Boulet de canon</span><span class="sh-pts">×15 si exact, 0 sinon</span>
+            </div>
+
+            <!-- Bonus -->
+            <div class="scoring-help-title" style="margin-top:12px">🌟 Points bonus</div>
+            <div class="scoring-help-grid">
+                <span class="sh-card">14 vert / jaune / violet</span><span class="sh-pts">+10 / carte</span>
+                <div class="sh-divider"></div>
+                <span class="sh-card">14 noir (Drapeau pirate)</span><span class="sh-pts">+20</span>
+                <div class="sh-divider"></div>
+                <span class="sh-card">Sirène capturée (par Pirate)</span><span class="sh-pts">+20 / sirène</span>
+                <div class="sh-divider"></div>
+                <span class="sh-card">Pirate capturé (par Skull King)</span><span class="sh-pts">+30 / pirate</span>
+                <div class="sh-divider"></div>
+                <span class="sh-card">Skull King capturé (par Sirène)</span><span class="sh-pts">+40</span>
+            </div>
+            <div class="sh-note">Bonus SK classique : accordés uniquement si mise exacte. Rascal : bonus suivent la précision.</div>
+
+            <!-- Pouvoirs pirates -->
+            <div class="scoring-help-title" style="margin-top:12px">🏴‍☠️ Pouvoirs avancés des pirates (optionnel)</div>
+            <div class="sh-note" style="margin-bottom:6px">Chaque pouvoir s'active en gagnant un pli avec ce pirate. Doit être utilisé immédiatement.</div>
+            <div class="sk-pirate-list">
+
+                <div class="sk-pirate-card">
+                    <div class="sk-pirate-name">🍰 Rosie la Douce</div>
+                    <div class="sk-pirate-power">Choisissez n'importe quel joueur pour commencer le prochain pli.</div>
+                    <div class="sk-pirate-score-tag">Pas d'impact sur le score</div>
+                </div>
+
+                <div class="sk-pirate-card">
+                    <div class="sk-pirate-name">🗡️ Will le Bandit</div>
+                    <div class="sk-pirate-power">Ajoutez 2 cartes de la pioche à votre main, puis défaussez 2 cartes.</div>
+                    <div class="sk-pirate-score-tag">Pas d'impact sur le score</div>
+                </div>
+
+                <div class="sk-pirate-card sk-pirate-card-score">
+                    <div class="sk-pirate-name">🎲 Rascal le Flambeur</div>
+                    <div class="sk-pirate-power">Pariez 0, 10 ou 20 points. Gagnez-les si votre mise est exacte, perdez-les sinon.</div>
+                    <div class="sk-pirate-score-tag sk-pirate-score-yes">⚡ Impacte le score — activez "Pouvoirs des pirates" en nouvelle partie</div>
+                </div>
+
+                <div class="sk-pirate-card">
+                    <div class="sk-pirate-name">🔮 Juanita Jade</div>
+                    <div class="sk-pirate-power">Regardez secrètement les cartes non distribuées pour voir ce qui n'est pas en jeu.</div>
+                    <div class="sk-pirate-score-tag">Pas d'impact sur le score</div>
+                </div>
+
+                <div class="sk-pirate-card sk-pirate-card-score">
+                    <div class="sk-pirate-name">💪 Harry le Géant</div>
+                    <div class="sk-pirate-power">Après le dernier pli, modifiez votre mise de +1, −1 ou laissez-la. Seul pirate dont le pouvoir s'utilise après le dernier pli.</div>
+                    <div class="sk-pirate-score-tag sk-pirate-score-yes">⚡ Impacte le score — activez "Pouvoirs des pirates" en nouvelle partie</div>
+                </div>
+
+            </div>
+
+            <!-- Règles avancées -->
+            <div class="scoring-help-title" style="margin-top:12px">⚓ Règles avancées (optionnel)</div>
+
+            <div class="sk-adv-aide">
+                <div class="sk-adv-aide-item">
+                    <span class="sk-adv-aide-icon">🦑</span>
+                    <div><strong>Kraken</strong> — lorsqu'il est joué, le pli est entièrement détruit. Personne ne le remporte. Le joueur qui <em>aurait</em> gagné commence le pli suivant.</div>
+                </div>
+                <div class="sk-adv-aide-item">
+                    <span class="sk-adv-aide-icon">🐋</span>
+                    <div><strong>Baleine blanche</strong> — neutralise toutes les cartes spéciales (elles ne peuvent plus gagner). Parmi les cartes numérotées restantes, la plus haute valeur l'emporte, quelle que soit la couleur. Si seules des spéciales ont été jouées, le pli est défaussé.</div>
+                </div>
+                <div class="sk-adv-aide-item">
+                    <span class="sk-adv-aide-icon">💰</span>
+                    <div><strong>Butin</strong> — en jouant une carte Butin, tu conclus une alliance avec le joueur qui remporte le pli. Si vous misez <em>tous les deux</em> correctement ce tour, vous gagnez chacun <strong>+20 points bonus</strong>.</div>
+                </div>
+                <div class="sk-adv-aide-item">
+                    <span class="sk-adv-aide-icon">👻</span>
+                    <div><strong>2 joueurs — Barbe Grise</strong> — un troisième joueur fantôme joue toujours en 2ème position. Il retourne la carte du dessus de son paquet sans suivre de couleur. Il ne mise pas et ne marque aucun point.</div>
+                </div>
+                <div class="sk-adv-aide-item">
+                    <span class="sk-adv-aide-icon">⚓</span>
+                    <div><strong>7–8 joueurs</strong> — le jeu contient 70 cartes. Avec 8 joueurs les manches 9 et 10 sont limitées à <strong>8 cartes</strong> par joueur (l'appli gère ça automatiquement).</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="section" style="margin-top:18px;" id="historySection">
+        <div class="section-title">Historique des manches</div>
+        <div class="history-list" id="historyList"></div>
+    </div>
+
+    <div class="card-deco">☠️ ⚓ 🏴‍☠️ 🗡️</div>
+
+</div><!-- /#app -->
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+    <button class="btn-main btn-score"   onclick="openScoreModal()">✏️ Saisir manche</button>
+    <button class="btn-main btn-next"    onclick="nextRound()">▶ Suivante</button>
+    <button class="btn-main btn-restart" onclick="openNewGameModal()">↺ Rejouer</button>
+</div>
+
+<!-- Score Modal -->
+<div class="modal-overlay" id="scoreModal" onclick="closeBgModal(event,'scoreModal')">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">☠️ Saisir la manche</div>
+        <div class="modal-sub" id="modalSub"></div>
+        <div id="scoreForm"></div>
+        <button class="modal-confirm" onclick="confirmScores()">✅ Confirmer la manche</button>
+    </div>
+</div>
+
+<!-- New Game Modal -->
+<div class="modal-overlay" id="newGameModal" onclick="closeBgModal(event,'newGameModal')">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">☠️ Nouvelle partie</div>
+        <div class="modal-sub">Configure ta prochaine partie</div>
+
+        <div class="newgame-section">
+            <div class="newgame-section-title">Joueurs</div>
+            <div class="choice-cards">
+                <div class="choice-card selected" id="cc-same" onclick="selectPlayerMode('same')">
+                    <div class="cc-icon">👥</div>
+                    <div class="cc-title">Mêmes joueurs</div>
+                    <div class="cc-sub">Remettre les scores à zéro</div>
+                </div>
+                <div class="choice-card" id="cc-new" onclick="selectPlayerMode('new')">
+                    <div class="cc-icon">✨</div>
+                    <div class="cc-title">Nouveaux joueurs</div>
+                    <div class="cc-sub">Repartir de zéro</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="newgame-section" id="ng-keep-section">
+            <div class="newgame-section-title">Joueurs à garder</div>
+            <div class="keep-players-list" id="ngKeepList"></div>
+        </div>
+
+        <div class="newgame-section" id="ng-new-section" style="display:none">
+            <div class="newgame-section-title">Nouveaux joueurs</div>
+            <div class="new-players-list" id="ngNewList"></div>
+            <div class="add-newplayer-form">
+                <input type="text" id="ngNewPlayerInput" placeholder="Nom du joueur…" maxlength="20" />
+                <button class="btn-add-sm" onclick="ngAddPlayer()">+ Ajouter</button>
+            </div>
+        </div>
+
+        <div class="newgame-section" id="ng-limit-section"></div>
+
+        <div id="ng-player-error" class="ng-player-error" style="display:none"></div>
+        <button class="newgame-confirm" onclick="confirmNewGame()">☠️ À l'abordage !</button>
+        <button class="newgame-cancel"  onclick="closeNewGameModal()">Annuler</button>
+    </div>
+</div>
+
+<!-- Winner screen -->
+<div class="winner-overlay" id="winnerScreen">
+    <div class="winner-trophy">🏴‍☠️</div>
+    <div class="winner-title">Capitaine des Sept Mers !</div>
+    <div class="winner-name"  id="winnerName"></div>
+    <div class="winner-score" id="winnerScore"></div>
+    <div class="winner-podium" id="winnerPodium"></div>
+    <button class="btn-winner-main" onclick="openNewGameFromWinner()">☠️ Nouvelle partie</button>
+</div>
+
+<script src="../../common/time-tracker.js"></script>
+<script src="../../common/core.js"></script>
+<script src="skullKing.js"></script>
+</body>
+</html>
