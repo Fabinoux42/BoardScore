@@ -3,38 +3,60 @@
    Utilise BoardScore.create() de core.js
 
    ── Règles de scoring ──
-   Le jeu se joue en 10 manches. Manche N = N cartes distribuées.
+   Le jeu se joue en 10 manches. Manche N = N cartes.
+   Avec 8 joueurs : rounds 9 et 10 = 8 cartes max (deck = 70 cartes).
 
    Mode Skull King (classique) :
-     Mise = 0, réussie        : +10 × N cartes
-     Mise = 0, ratée          : −10 × N cartes
+     Mise = 0, réussie        : +10 × cardCount
+     Mise = 0, ratée          : −10 × cardCount
      Mise ≥ 1, exacte         : +20 × mise + bonus
      Mise ≥ 1, pas exacte     : −10 × |écart|
 
    Mode Rascal :
-     Potentiel = 10 × N cartes (identique pour tous)
+     Potentiel = 10 × cardCount (identique pour tous)
      Coup direct (écart = 0) :   ×10 par carte + bonus
      Frappe à revers (écart = 1) : ×5 par carte + ½ bonus
      Échec cuisant (écart ≥ 2) : 0
      Option Boulet de canon :
        Exact → ×15 par carte + bonus  |  Raté → 0
 
-   Points bonus (uniquement si mise réussie ou Chevrotine) :
+   Points bonus (si mise exacte) :
      14 couleur (vert/jaune/violet)  : +10 par carte
      14 noir (Drapeau pirate)        : +20 par carte
      Sirène capturée par Pirate      : +20 par sirène
      Pirate capturé par Skull King   : +30 par pirate
      Skull King capturé par Sirène   : +40
+     Alliance Butin réussie          : +20 par alliance
+
+   Règles avancées optionnelles :
+     Kraken  : un pli détruit — personne ne le remporte
+     Baleine : les spéciales n'ont plus d'effet, la plus haute valeur gagne
+     Butin   : alliance +20 si les deux joueurs ont misé juste
+
+   2 joueurs : jeu normal, Barbe Grise joue en fantôme (pas de score)
    ═══════════════════════════════════════════ */
 
 const TOTAL_ROUNDS = 10;
+// Deck total : 56 couleurs + 5 pirates + 1 tigresse + 1 SK + 2 sirènes + 5 fuites = 70
+const DECK_SIZE = 70;
+
+/* ── Calcul du nombre de cartes réel pour un round et un nb de joueurs ── */
+function getCardCount(round, nbPlayers) {
+    if (nbPlayers <= 0) return round;
+    // Avec 8 joueurs, rounds 9 et 10 seraient 72/80 cartes > 70 → cap à 8
+    const maxByDeck = Math.floor(DECK_SIZE / nbPlayers);
+    return Math.min(round, maxByDeck);
+}
 
 /* ── État temporaire de la modale de score ── */
-// tempData[name] = { mise, result, bonus14c, bonus14n, bonusSiren, bonusPirate, bonusSK, boulet, bonusOpen }
+// tempData[name] = { mise, result, bonus14c, bonus14n, bonusSiren, bonusPirate, bonusSK, bonusButin, boulet, bonusOpen }
 let tempData = {};
 
 /* ── État temporaire nouvelle partie ── */
-let ngScoreMode = 'skullking'; // 'skullking' | 'rascal'
+let ngScoreMode    = 'skullking';
+let ngAdvancedKraken = false;
+let ngAdvancedBaleine = false;
+let ngAdvancedButin  = false;
 
 
 /* ═══════════════════════════════════════════
@@ -46,22 +68,28 @@ const game = BoardScore.create({
     highestWins:  true,
 
     defaultState: {
-        players:   [],
-        round:     1,
-        history:   [],
-        scoreMode: 'skullking',
+        players:          [],
+        round:            1,
+        history:          [],
+        scoreMode:        'skullking',
+        advancedKraken:   false,
+        advancedBaleine:  false,
+        advancedButin:    false,
     },
 
-    /* ── Badge : "Manche N/10" ── */
+    /* ── Badge : "Manche N/10 (X cartes)" ── */
     buildBadgeText(state, scored) {
-        return (scored ? '✅ ' : '⏳ ') + 'Manche ' + state.round + '/' + TOTAL_ROUNDS;
+        const cc = getCardCount(state.round, state.players.length);
+        const cardInfo = cc !== state.round ? ' (' + cc + ' cartes)' : '';
+        return (scored ? '✅ ' : '⏳ ') + 'Manche ' + state.round + '/' + TOTAL_ROUNDS + cardInfo;
     },
 
     /* ── Historique ── */
     buildHistoryItem(h) {
+        const cc = h.cardCount || h.round;
         const header =
             '<div class="history-item-header">' +
-            '<span class="history-round-num">Manche ' + h.round + ' — ' + h.round + ' carte' + (h.round > 1 ? 's' : '') + '</span>' +
+            '<span class="history-round-num">Manche ' + h.round + ' — ' + cc + ' carte' + (cc > 1 ? 's' : '') + '</span>' +
             '</div>';
 
         const scores = '<div class="history-scores">' +
@@ -69,11 +97,10 @@ const game = BoardScore.create({
                 const sign = d.pts >= 0 ? '+' : '';
                 const cls  = d.pts > 0 ? 'bonus' : (d.pts < 0 ? 'penalty' : '');
                 const correct = d.mise === d.result;
-                const miseStr = d.mise + '/' + d.result;
                 const tag = correct ? '✅' : '❌';
                 return '<span class="h-score sk-hscore">' +
                     '<strong>' + name + '</strong>' +
-                    '<span class="sk-mise-tag">' + tag + ' ' + miseStr + '</span>' +
+                    '<span class="sk-mise-tag">' + tag + ' ' + d.mise + '/' + d.result + '</span>' +
                     '<span class="val ' + cls + '">' + sign + d.pts + '</span>' +
                     '</span>';
             }).join('') +
@@ -82,13 +109,53 @@ const game = BoardScore.create({
         return '<div class="history-item">' + header + scores + '</div>';
     },
 
+    /* ── Rendu : limiter ajout joueurs (2 mini, 8 maxi) + note 2J ── */
+    onRender(state) {
+        const n = state.players.length;
+        const addForm = document.querySelector('.add-player-form');
+        if (addForm) {
+            const full = n >= 8;
+            addForm.style.opacity = full ? '0.35' : '1';
+            const btn = addForm.querySelector('.btn-add');
+            const inp = addForm.querySelector('input');
+            if (btn) btn.disabled = full;
+            if (inp) {
+                inp.disabled = full;
+                if (full) inp.placeholder = '8 joueurs maximum';
+            }
+        }
+        // Note Barbe Grise en mode 2 joueurs
+        let noteEl = document.getElementById('sk-two-player-note');
+        if (n === 2) {
+            if (!noteEl) {
+                noteEl = document.createElement('div');
+                noteEl.id = 'sk-two-player-note';
+                noteEl.className = 'sk-two-player-note';
+                noteEl.innerHTML = '👻 Mode 2 joueurs actif — jouez avec <strong>Barbe Grise</strong> comme troisième joueur fantôme (il joue en 2ème position, ne mise pas et ne marque pas de points).';
+                const playersList = document.getElementById('playersList');
+                if (playersList) playersList.insertAdjacentElement('afterend', noteEl);
+            }
+        } else {
+            if (noteEl) noteEl.remove();
+        }
+    },
+
     /* ── Nouvelle partie ── */
-    onOpenNewGameModal() {
-        ngScoreMode = game.getState().scoreMode || 'skullking';
+    onOpenNewGameModal(state) {
+        ngScoreMode      = state.scoreMode      || 'skullking';
+        ngAdvancedKraken  = state.advancedKraken  || false;
+        ngAdvancedBaleine = state.advancedBaleine || false;
+        ngAdvancedButin   = state.advancedButin   || false;
         renderNgScoreMode();
     },
+    onSelectPlayerMode() { renderNgScoreMode(); },
+    onToggleKeepPlayer()  { renderNgScoreMode(); },
+    onNgPlayersChanged()  { renderNgScoreMode(); },
     onConfirmNewGame(state) {
-        state.scoreMode = ngScoreMode;
+        state.scoreMode       = ngScoreMode;
+        state.advancedKraken  = ngAdvancedKraken;
+        state.advancedBaleine = ngAdvancedBaleine;
+        state.advancedButin   = ngAdvancedButin;
     },
 
     /* ── Fin de partie : 10 manches jouées ── */
@@ -102,10 +169,11 @@ const game = BoardScore.create({
    CALCUL DES SCORES
    ═══════════════════════════════════════════ */
 function computeBonus(d) {
-    return d.bonus14c * 10 + d.bonus14n * 20 + d.bonusSiren * 20 + d.bonusPirate * 30 + (d.bonusSK ? 40 : 0);
+    return d.bonus14c * 10 + d.bonus14n * 20 + d.bonusSiren * 20
+        + d.bonusPirate * 30 + (d.bonusSK ? 40 : 0) + (d.bonusButin || 0) * 20;
 }
 
-function computePlayerScore(d, round, scoreMode) {
+function computePlayerScore(d, cardCount, scoreMode) {
     const mise   = d.mise;
     const result = d.result;
     const ecart  = Math.abs(result - mise);
@@ -113,20 +181,21 @@ function computePlayerScore(d, round, scoreMode) {
 
     if (scoreMode === 'skullking') {
         if (mise === 0) {
-            return result === 0 ? 10 * round : -(10 * round);
+            // Mise 0 : pas de bonus (le score est le score entier)
+            return result === 0 ? 10 * cardCount : -(10 * cardCount);
         }
         if (ecart === 0) return 20 * mise + bonus;
-        return -(10 * ecart);
+        return -(10 * ecart);  // −10 par pli d'écart, pas par carte !
     }
 
     /* Rascal */
     const isBoulet = d.boulet;
     if (ecart === 0) {
-        const basePts = isBoulet ? 15 * round : 10 * round;
+        const basePts = isBoulet ? 15 * cardCount : 10 * cardCount;
         return basePts + bonus;
     }
     if (ecart === 1 && !isBoulet) {
-        return Math.floor(5 * round + bonus / 2);
+        return Math.floor(5 * cardCount + bonus / 2);
     }
     return 0;
 }
@@ -142,14 +211,20 @@ function openScoreModal() {
         return;
     }
 
+    const cardCount = getCardCount(state.round, state.players.length);
+
     /* Pré-remplissage si la manche est déjà saisie */
     const existing = state.history.find(h => h.round === state.round);
     state.players.forEach(p => {
         if (existing && existing.scores[p.name]) {
-            const d = existing.scores[p.name];
-            tempData[p.name] = { ...d, bonusOpen: false };
+            tempData[p.name] = { ...existing.scores[p.name], bonusOpen: false };
         } else {
-            tempData[p.name] = { mise: 0, result: 0, bonus14c: 0, bonus14n: 0, bonusSiren: 0, bonusPirate: 0, bonusSK: false, boulet: false, bonusOpen: false };
+            tempData[p.name] = {
+                mise: 0, result: 0,
+                bonus14c: 0, bonus14n: 0, bonusSiren: 0, bonusPirate: 0,
+                bonusSK: false, bonusButin: 0,
+                boulet: false, bonusOpen: false
+            };
         }
     });
 
@@ -158,23 +233,41 @@ function openScoreModal() {
 }
 
 function renderScoreModal() {
-    const state    = game.getState();
-    const round    = state.round;
-    const mode     = state.scoreMode;
-    const isRascal = mode === 'rascal';
+    const state     = game.getState();
+    const round     = state.round;
+    const mode      = state.scoreMode;
+    const isRascal  = mode === 'rascal';
+    const cardCount = getCardCount(round, state.players.length);
+    const hasButin  = state.advancedButin;
+    const hasKraken = state.advancedKraken;
+    const hasBaleine = state.advancedBaleine;
 
-    BoardScore.$('modalSub').textContent = 'Manche ' + round + ' — ' + round + ' carte' + (round > 1 ? 's' : '') + ' distribuée' + (round > 1 ? 's' : '');
+    // Sous-titre
+    let subText = 'Manche ' + round + ' — ' + cardCount + ' carte' + (cardCount > 1 ? 's' : '') + ' distribuée' + (cardCount > 1 ? 's' : '');
+    const activeRules = [];
+    if (hasKraken)  activeRules.push('🦑 Kraken');
+    if (hasBaleine) activeRules.push('🐋 Baleine blanche');
+    if (activeRules.length) subText += ' · ' + activeRules.join(' · ');
+    BoardScore.$('modalSub').textContent = subText;
+
+    // Calcul du total résultats déjà saisis (pour contrainte)
+    function otherResultsTotal(excludeName) {
+        return state.players.reduce((s, p) => s + (p.name !== excludeName ? (tempData[p.name]?.result || 0) : 0), 0);
+    }
 
     let html = '';
 
     state.players.forEach(p => {
         const d   = tempData[p.name];
-        const pts = computePlayerScore(d, round, mode);
+        const pts = computePlayerScore(d, cardCount, mode);
         const cls = pts > 0 ? 'sp-gain' : (pts < 0 ? 'sp-loss' : 'sp-zero');
         const pre = pts > 0 ? '+' : '';
         const ecart = Math.abs(d.result - d.mise);
 
-        /* État de précision */
+        // Max résultat pour ce joueur (contrainte globale)
+        const maxResult = cardCount - otherResultsTotal(p.name);
+
+        /* Tag de précision */
         let precisionTag = '';
         if (isRascal) {
             if (ecart === 0)       precisionTag = '<span class="sk-prec direct">Coup direct</span>';
@@ -183,13 +276,18 @@ function renderScoreModal() {
                 : '<span class="sk-prec revers">Frappe à revers</span>';
             else                   precisionTag = '<span class="sk-prec fail">Échec cuisant</span>';
         } else {
-            if (d.mise === 0)      precisionTag = d.result === 0 ? '<span class="sk-prec direct">✅ Réussi</span>' : '<span class="sk-prec fail">❌ Raté</span>';
-            else                   precisionTag = ecart === 0 ? '<span class="sk-prec direct">✅ Exact</span>' : '<span class="sk-prec fail">❌ Écart ' + ecart + '</span>';
+            if (d.mise === 0) precisionTag = d.result === 0
+                ? '<span class="sk-prec direct">✅ Réussi</span>'
+                : '<span class="sk-prec fail">❌ Raté</span>';
+            else precisionTag = ecart === 0
+                ? '<span class="sk-prec direct">✅ Exact</span>'
+                : '<span class="sk-prec fail">❌ Écart ' + ecart + '</span>';
         }
+
+        const pName = p.name.replace(/'/g, "\\'");
 
         html +=
             '<div class="sk-player-row">' +
-            /* En-tête joueur + score live */
             '<div class="sk-player-header">' +
             '<div class="sk-avatar" style="background:' + p.color + '">' + BoardScore.getInitial(p.name) + '</div>' +
             '<div class="sk-player-info">' +
@@ -199,165 +297,107 @@ function renderScoreModal() {
             '<div class="sk-live-score ' + cls + '">' + pre + pts + '</div>' +
             '</div>' +
 
-            /* Mise + Résultat */
             '<div class="sk-inputs-row">' +
             /* Mise */
             '<div class="sk-input-group">' +
             '<div class="sk-input-label">Mise</div>' +
             '<div class="sk-stepper-wrap">' +
-            '<div class="score-stepper" onclick="skStep(\'' + p.name + '\',\'mise\',-1,' + round + ')">−</div>' +
-            '<input type="number" id="mise_' + p.name + '" value="' + d.mise + '" min="0" max="' + round + '" oninput="skInput(\'' + p.name + '\',\'mise\',this.value,' + round + ')" />' +
-            '<div class="score-stepper" onclick="skStep(\'' + p.name + '\',\'mise\',1,' + round + ')">+</div>' +
-            '</div>' +
-            '</div>' +
-
+            '<div class="score-stepper" onclick="skStep(\'' + pName + '\',\'mise\',-1,' + cardCount + ',0)">−</div>' +
+            '<input type="number" id="mise_' + p.name + '" value="' + d.mise + '" min="0" max="' + cardCount + '" oninput="skInput(\'' + pName + '\',\'mise\',this.value,' + cardCount + ',0)" />' +
+            '<div class="score-stepper" onclick="skStep(\'' + pName + '\',\'mise\',1,' + cardCount + ',0)">+</div>' +
+            '</div></div>' +
             /* Résultat */
             '<div class="sk-input-group">' +
             '<div class="sk-input-label">Plis gagnés</div>' +
             '<div class="sk-stepper-wrap">' +
-            '<div class="score-stepper" onclick="skStep(\'' + p.name + '\',\'result\',-1,' + round + ')">−</div>' +
-            '<input type="number" id="result_' + p.name + '" value="' + d.result + '" min="0" max="' + round + '" oninput="skInput(\'' + p.name + '\',\'result\',this.value,' + round + ')" />' +
-            '<div class="score-stepper" onclick="skStep(\'' + p.name + '\',\'result\',1,' + round + ')">+</div>' +
+            '<div class="score-stepper" onclick="skStep(\'' + pName + '\',\'result\',-1,' + maxResult + ',' + cardCount + ')">−</div>' +
+            '<input type="number" id="result_' + p.name + '" value="' + d.result + '" min="0" max="' + maxResult + '" oninput="skInput(\'' + pName + '\',\'result\',this.value,' + maxResult + ',' + cardCount + ')" />' +
+            '<div class="score-stepper" onclick="skStep(\'' + pName + '\',\'result\',1,' + maxResult + ',' + cardCount + ')">+</div>' +
             '</div>' +
             '</div>' +
             '</div>' +
 
-            /* Tag de précision + Rascal Boulet */
             '<div class="sk-precision-row">' +
             precisionTag +
             (isRascal
-                ? '<div class="sk-boulet-toggle' + (d.boulet ? ' active' : '') + '" onclick="skToggleBoulet(\'' + p.name + '\')">' +
-                '💣 Boulet de canon' +
-                '</div>'
+                ? '<div class="sk-boulet-toggle' + (d.boulet ? ' active' : '') + '" onclick="skToggleBoulet(\'' + pName + '\')">💣 Boulet de canon</div>'
                 : '') +
             '</div>' +
 
-            /* Toggle bonus */
-            '<div class="sk-bonus-toggle' + (d.bonusOpen ? ' open' : '') + '" onclick="skToggleBonus(\'' + p.name + '\')">' +
+            '<div class="sk-bonus-toggle' + (d.bonusOpen ? ' open' : '') + '" onclick="skToggleBonus(\'' + pName + '\')">' +
             '🌟 Points bonus' +
             (computeBonus(d) > 0 ? ' <span class="sk-bonus-badge">+' + computeBonus(d) + '</span>' : '') +
             '</div>' +
-
-            /* Bonus section */
-            (d.bonusOpen ? buildBonusSection(p.name, d) : '') +
-
-            '</div>'; // sk-player-row
+            (d.bonusOpen ? buildBonusSection(p.name, d, hasButin) : '') +
+            '</div>';
     });
 
     BoardScore.$('scoreForm').innerHTML = html;
 }
 
-function buildBonusSection(name, d) {
+function buildBonusSection(name, d, hasButin) {
     const esc = name.replace(/'/g, "\\'");
-    return '<div class="sk-bonus-section">' +
+    let html = '<div class="sk-bonus-section">';
 
-        /* 14 couleur */
-        '<div class="sk-bonus-row">' +
-        '<span class="sk-bonus-label">14 vert/jaune/violet</span>' +
-        '<span class="sk-bonus-pts">+10 / carte</span>' +
-        '<div class="sk-bonus-counter">' +
-        '<div class="sk-bonus-step" onclick="skBonus(\'' + esc + '\',\'bonus14c\',-1)">−</div>' +
-        '<span id="b14c_' + name + '">' + d.bonus14c + '</span>' +
-        '<div class="sk-bonus-step" onclick="skBonus(\'' + esc + '\',\'bonus14c\',1)">+</div>' +
-        '</div></div>' +
-
-        /* 14 noir */
-        '<div class="sk-bonus-row">' +
-        '<span class="sk-bonus-label">14 noir (Drapeau pirate)</span>' +
-        '<span class="sk-bonus-pts">+20 / carte</span>' +
-        '<div class="sk-bonus-counter">' +
-        '<div class="sk-bonus-step" onclick="skBonus(\'' + esc + '\',\'bonus14n\',-1)">−</div>' +
-        '<span id="b14n_' + name + '">' + d.bonus14n + '</span>' +
-        '<div class="sk-bonus-step" onclick="skBonus(\'' + esc + '\',\'bonus14n\',1)">+</div>' +
-        '</div></div>' +
-
-        /* Sirène capturée */
-        '<div class="sk-bonus-row">' +
-        '<span class="sk-bonus-label">Sirène capturée (par Pirate)</span>' +
-        '<span class="sk-bonus-pts">+20 / sirène</span>' +
-        '<div class="sk-bonus-counter">' +
-        '<div class="sk-bonus-step" onclick="skBonus(\'' + esc + '\',\'bonusSiren\',-1)">−</div>' +
-        '<span id="bsiren_' + name + '">' + d.bonusSiren + '</span>' +
-        '<div class="sk-bonus-step" onclick="skBonus(\'' + esc + '\',\'bonusSiren\',1)">+</div>' +
-        '</div></div>' +
-
-        /* Pirate capturé */
-        '<div class="sk-bonus-row">' +
-        '<span class="sk-bonus-label">Pirate capturé (par Skull King)</span>' +
-        '<span class="sk-bonus-pts">+30 / pirate</span>' +
-        '<div class="sk-bonus-counter">' +
-        '<div class="sk-bonus-step" onclick="skBonus(\'' + esc + '\',\'bonusPirate\',-1)">−</div>' +
-        '<span id="bpirate_' + name + '">' + d.bonusPirate + '</span>' +
-        '<div class="sk-bonus-step" onclick="skBonus(\'' + esc + '\',\'bonusPirate\',1)">+</div>' +
-        '</div></div>' +
-
-        /* Skull King capturé */
+    html +=
+        mkBonusCounter(esc, 'bonus14c',   '14 vert/jaune/violet',               '+10 / carte', d.bonus14c) +
+        mkBonusCounter(esc, 'bonus14n',   '14 noir (Drapeau pirate)',            '+20',         d.bonus14n) +
+        mkBonusCounter(esc, 'bonusSiren', 'Sirène capturée (par Pirate)',        '+20 / sirène', d.bonusSiren) +
+        mkBonusCounter(esc, 'bonusPirate','Pirate capturé (par Skull King)',     '+30 / pirate', d.bonusPirate) +
         '<div class="sk-bonus-row">' +
         '<span class="sk-bonus-label">Skull King capturé (par Sirène)</span>' +
         '<span class="sk-bonus-pts">+40</span>' +
         '<div class="sk-bonus-check' + (d.bonusSK ? ' active' : '') + '" onclick="skToggleSK(\'' + esc + '\')">' +
-        (d.bonusSK ? '✅' : '⬜') +
-        '</div></div>' +
+        (d.bonusSK ? '✅' : '⬜') + '</div></div>';
 
-        '</div>'; // sk-bonus-section
+    if (hasButin) {
+        html += mkBonusCounter(esc, 'bonusButin', 'Alliance Butin réussie (×2 joueurs)',  '+20 / alliance', d.bonusButin || 0);
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function mkBonusCounter(esc, field, label, pts, val) {
+    return '<div class="sk-bonus-row">' +
+        '<span class="sk-bonus-label">' + label + '</span>' +
+        '<span class="sk-bonus-pts">' + pts + '</span>' +
+        '<div class="sk-bonus-counter">' +
+        '<div class="sk-bonus-step" onclick="skBonus(\'' + esc + '\',\'' + field + '\',-1)">−</div>' +
+        '<span>' + val + '</span>' +
+        '<div class="sk-bonus-step" onclick="skBonus(\'' + esc + '\',\'' + field + '\',1)">+</div>' +
+        '</div></div>';
 }
 
 /* ── Handlers ── */
-function skStep(name, field, delta, max) {
+function skStep(name, field, delta, max, cardCount) {
     const d = tempData[name];
-    d[field] = Math.max(0, Math.min(max, d[field] + delta));
-    updatePlayerRow(name);
+    const newVal = Math.max(0, Math.min(max, (d[field] || 0) + delta));
+    d[field] = newVal;
+    renderScoreModal();
 }
 
-function skInput(name, field, val, max) {
+function skInput(name, field, val, max, cardCount) {
     const d = tempData[name];
     d[field] = Math.max(0, Math.min(max, parseInt(val) || 0));
-    updatePlayerRow(name);
+    renderScoreModal();
 }
 
 function skToggleBoulet(name) {
     tempData[name].boulet = !tempData[name].boulet;
-    updatePlayerRow(name);
+    renderScoreModal();
 }
-
 function skToggleBonus(name) {
     tempData[name].bonusOpen = !tempData[name].bonusOpen;
     renderScoreModal();
 }
-
 function skBonus(name, field, delta) {
     const d = tempData[name];
-    d[field] = Math.max(0, d[field] + delta);
-    updatePlayerRow(name);
+    d[field] = Math.max(0, (d[field] || 0) + delta);
+    renderScoreModal();
 }
-
 function skToggleSK(name) {
     tempData[name].bonusSK = !tempData[name].bonusSK;
-    updatePlayerRow(name);
-}
-
-/* Mise à jour légère d'une ligne joueur (sans rerender complet) */
-function updatePlayerRow(name) {
-    const state = game.getState();
-    const round = state.round;
-    const mode  = state.scoreMode;
-    const d     = tempData[name];
-    const ecart = Math.abs(d.result - d.mise);
-    const pts   = computePlayerScore(d, round, mode);
-    const cls   = pts > 0 ? 'sp-gain' : (pts < 0 ? 'sp-loss' : 'sp-zero');
-    const pre   = pts > 0 ? '+' : '';
-    const isRascal = mode === 'rascal';
-
-    /* Score live */
-    const scoreEl = document.querySelector('[data-sk-score="' + name + '"]');
-
-    /* Mise à jour des inputs si nécessaire */
-    const miseInp   = BoardScore.$('mise_' + name);
-    const resultInp = BoardScore.$('result_' + name);
-    if (miseInp && parseInt(miseInp.value) !== d.mise) miseInp.value = d.mise;
-    if (resultInp && parseInt(resultInp.value) !== d.result) resultInp.value = d.result;
-
-    /* Rerender complet de la ligne pour mettre à jour tag précision, bonus badge, boulet */
     renderScoreModal();
 }
 
@@ -366,18 +406,21 @@ function updatePlayerRow(name) {
    CONFIRMATION DE LA MANCHE
    ═══════════════════════════════════════════ */
 function confirmScores() {
-    const state = game.getState();
-    const round = state.round;
-    const mode  = state.scoreMode;
+    const state     = game.getState();
+    const round     = state.round;
+    const mode      = state.scoreMode;
+    const cardCount = getCardCount(round, state.players.length);
 
     const scores = {};
     state.players.forEach(p => {
         const d   = tempData[p.name];
-        const pts = computePlayerScore(d, round, mode);
-        scores[p.name] = { mise: d.mise, result: d.result, pts };
+        const pts = computePlayerScore(d, cardCount, mode);
+        scores[p.name] = { mise: d.mise, result: d.result, pts,
+            bonus14c: d.bonus14c, bonus14n: d.bonus14n,
+            bonusSiren: d.bonusSiren, bonusPirate: d.bonusPirate,
+            bonusSK: d.bonusSK, bonusButin: d.bonusButin || 0, boulet: d.boulet };
     });
 
-    /* Mettre à jour les scores */
     const existingIdx = state.history.findIndex(h => h.round === round);
 
     state.players.forEach(p => {
@@ -390,7 +433,7 @@ function confirmScores() {
         }
     });
 
-    const entry = { round, scores };
+    const entry = { round, cardCount, scores };
     if (existingIdx !== -1) state.history[existingIdx] = entry;
     else state.history.push(entry);
 
@@ -401,7 +444,7 @@ function confirmScores() {
 
 
 /* ═══════════════════════════════════════════
-   NOUVELLE PARTIE — Mode de scoring
+   NOUVELLE PARTIE — Config
    ═══════════════════════════════════════════ */
 function renderNgScoreMode() {
     const section = BoardScore.$('ng-limit-section');
@@ -420,6 +463,17 @@ function renderNgScoreMode() {
         '<div class="cc-title">Rascal</div>' +
         '<div class="cc-sub">Plus équilibré — potentiel identique pour tous</div>' +
         '</div>' +
+        '</div>' +
+        '<div class="newgame-section-title" style="margin-top:14px">🏴‍☠️ Règles avancées (optionnel)</div>' +
+        '<div class="sk-advanced-rules">' +
+        mkAdvancedToggle('butin',   '💰 Butin', 'Alliance +20 si les deux joueurs ont misé juste', ngAdvancedButin) +
+        '</div>';
+}
+
+function mkAdvancedToggle(key, label, desc, active) {
+    return '<div class="sk-adv-toggle' + (active ? ' active' : '') + '" onclick="toggleAdvanced(\'' + key + '\')">' +
+        '<div class="sk-adv-info"><div class="sk-adv-label">' + label + '</div><div class="sk-adv-desc">' + desc + '</div></div>' +
+        '<div class="sk-adv-check">' + (active ? '✅' : '⬜') + '</div>' +
         '</div>';
 }
 
@@ -428,6 +482,52 @@ function selectNgMode(mode) {
     renderNgScoreMode();
 }
 
+function toggleAdvanced(key) {
+    if (key === 'kraken')  ngAdvancedKraken  = !ngAdvancedKraken;
+    if (key === 'baleine') ngAdvancedBaleine = !ngAdvancedBaleine;
+    if (key === 'butin')   ngAdvancedButin   = !ngAdvancedButin;
+    renderNgScoreMode();
+}
+
+
+/* ── Surcharge confirmNewGame : min 2, max 8 joueurs ── */
+const _coreConfirmNewGame = window.confirmNewGame;
+window.confirmNewGame = () => {
+    const mode = game.getNgMode();
+    let count = 0;
+    if (mode === 'same') {
+        count = [...game.getNgKeepSet()].length;
+    } else {
+        count = game.getNgNewPlayers().length;
+    }
+    if (count < 2) {
+        alert('Il faut au moins 2 joueurs pour jouer à Skull King !');
+        return;
+    }
+    if (count > 8) {
+        alert('Skull King se joue à 8 joueurs maximum !');
+        return;
+    }
+    _coreConfirmNewGame();
+};
+
+/* ── Surcharges pour limiter à 8 joueurs dans la modale nouvelle partie ── */
+const _coreNgAdd = window.ngAddPlayer;
+const _coreNgAddRoster = window.ngAddFromRoster || ((n) => game.ngAddFromRoster(n));
+
+window.ngAddPlayer = () => {
+    if (game.getNgNewPlayers().length >= 8) {
+        const inp = BoardScore.$('ngNewPlayerInput');
+        if (inp) { inp.style.borderColor = 'var(--red)'; setTimeout(() => inp.style.borderColor = '', 800); }
+        return;
+    }
+    _coreNgAdd();
+};
+
+window.ngAddFromRoster = (name) => {
+    if (game.getNgNewPlayers().length >= 8) return;
+    game.ngAddFromRoster(name);
+};
 
 /* ── INIT ── */
 game.init();

@@ -216,3 +216,80 @@
     background: var(--glass); padding: 1px 5px;
     border-radius: 5px; flex-shrink: 0;
 }
+/* ══════════════════════════════════════════
+   CONTRAINTE PLIS / NOTE 2 JOUEURS
+   ══════════════════════════════════════════ */
+.sk-result-cap {
+    font-size: 0.7rem; color: var(--muted);
+    padding: 2px 4px; margin-left: -2px;
+    flex-shrink: 0;
+}
+
+.sk-two-player-note {
+    margin: 8px 16px 0;
+    padding: 10px 12px;
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.25);
+    border-radius: 12px;
+    font-size: 0.78rem;
+    color: var(--text);
+    line-height: 1.5;
+}
+
+/* ══════════════════════════════════════════
+   RÈGLES AVANCÉES (nouvelle partie)
+   ══════════════════════════════════════════ */
+.sk-advanced-rules {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.sk-adv-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    cursor: pointer;
+    transition: all 0.13s;
+    user-select: none;
+}
+.sk-adv-toggle:active { transform: scale(0.98); }
+.sk-adv-toggle.active {
+    border-color: var(--game-accent);
+    background: rgba(232,160,32,0.08);
+}
+.sk-adv-info { flex: 1; min-width: 0; }
+.sk-adv-label {
+    font-size: 0.85rem; font-weight: 700;
+    color: var(--text);
+}
+.sk-adv-toggle.active .sk-adv-label { color: var(--game-accent); }
+.sk-adv-desc {
+    font-size: 0.7rem; color: var(--muted);
+    margin-top: 2px; line-height: 1.4;
+}
+.sk-adv-check { font-size: 1rem; flex-shrink: 0; }
+/* ══════════════════════════════════════════
+   AIDE-MÉMOIRE RÈGLES AVANCÉES
+   ══════════════════════════════════════════ */
+.sk-adv-aide {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 6px;
+}
+.sk-adv-aide-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 0.77rem; color: var(--text); line-height: 1.5;
+    padding: 8px 10px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.sk-adv-aide-icon {
+    font-size: 1.1rem; flex-shrink: 0; margin-top: 1px;
+}
+.sk-adv-aide-item strong { color: var(--game-accent); }
